@@ -18,7 +18,7 @@ namespace RaftCraft.Sample
 
             var raftNode = new RaftNode(
                 host => new RaftServer(host.Address), 
-                client => new PersistentWebSocketClient(client, socketFactory), 
+                peer => new PersistentWebSocketClient(peer, socketFactory), 
                 converted);
 
             raftNode.Start();

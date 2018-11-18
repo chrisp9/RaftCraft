@@ -17,35 +17,64 @@ namespace RaftCraft.Domain
         public AppendEntriesRequest AppendEntriesRequest { get; set; }
 
         [ProtoMember(4)]
+        public AppendEntriesResponse AppendEntriesResponse { get; set; }
+
+        [ProtoMember(5)]
         public VoteRequest VoteRequest { get; set; }
 
+        [ProtoMember(6)]
+        public VoteResponse VoteResponse { get; set; }
+
         private RequestMessage(
+            int nodeId,
             Guid requestId,
             AppendEntriesRequest appendEntriesRequest,
+            AppendEntriesResponse appendEntriesResponse,
             VoteRequest voteRequest,
-            int nodeId)
+            VoteResponse voteResponse)
         {
             RequestId = requestId;
+            NodeId = nodeId;
+
             AppendEntriesRequest = appendEntriesRequest;
+            AppendEntriesResponse = appendEntriesResponse;
+
             VoteRequest = voteRequest;
+            VoteResponse = voteResponse;
         }
 
         public RequestMessage() { }
 
-        public static RequestMessage AppendEntries(
+        public static RequestMessage NewAppendEntiresRequest(
             int nodeId,
             Guid requestId, 
             AppendEntriesRequest appendEntries)
         {
-            return new RequestMessage(requestId, appendEntries, null, nodeId);
+            return new RequestMessage(nodeId, requestId, appendEntries, null, null, null);
         }
 
-        public static RequestMessage Vote(
+        public static RequestMessage NewAppendEntriesResponse(
+            int nodeId,
+            Guid requestId,
+            AppendEntriesResponse appendEntriesResponse)
+        {
+            return new RequestMessage(nodeId, requestId, null, appendEntriesResponse, null, null);
+        }
+
+        public static RequestMessage NewVoteRequest(
             int nodeId,
             Guid requestId, 
-            VoteRequest vote)
+            VoteRequest voteRequest)
         {
-            return new RequestMessage(requestId, null, vote, nodeId);
+            return new RequestMessage(nodeId, requestId, null, null, voteRequest, null);
+        }
+
+        public static RequestMessage NewVoteResponse(
+            int nodeId,
+            Guid requestId,
+            VoteResponse voteResponse)
+        {
+            return new RequestMessage(nodeId, requestId, null, null, null, voteResponse);
         }
     }
 
@@ -105,5 +134,37 @@ namespace RaftCraft.Domain
         }
 
         public AppendEntriesRequest() { }
+    }
+
+    [ProtoContract]
+    [Serializable]
+    public class AppendEntriesResponse
+    {
+        [ProtoMember(1)]
+        public bool Successful { get; set; }
+
+        public AppendEntriesResponse(bool successful)
+        {
+            Successful = successful;
+        }
+
+        public AppendEntriesResponse() { }
+    }
+
+    [ProtoContract]
+    [Serializable]
+    public class VoteResponse
+    {
+        [ProtoMember(1)]
+        public int Term { get; set; }
+
+        [ProtoMember(2)]
+        public bool VoteGranted { get; set; }
+
+        public VoteResponse(int term, bool voteGranted)
+        {
+            Term = term;
+            VoteGranted = voteGranted;
+        }
     }
 }
