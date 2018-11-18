@@ -8,12 +8,15 @@ namespace RaftCraft.Domain
     public class ResponseMessage
     {
         [ProtoMember(1)]
-        public Guid RequestId { get; set; }
+        public int NodeId { get; set; }
 
         [ProtoMember(2)]
-        public AppendEntriesResponse AppendEntriesResponse { get; set; }
+        public Guid RequestId { get; set; }
 
         [ProtoMember(3)]
+        public AppendEntriesResponse AppendEntriesResponse { get; set; }
+
+        [ProtoMember(4)]
         public VoteResponse VoteResponse { get; set; }
 
         private ResponseMessage(

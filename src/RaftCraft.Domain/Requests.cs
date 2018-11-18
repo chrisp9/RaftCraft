@@ -8,18 +8,22 @@ namespace RaftCraft.Domain
     public class RequestMessage
     {
         [ProtoMember(1)]
-        Guid RequestId { get; set; }
+        public int NodeId { get; set; }
 
         [ProtoMember(2)]
-        public AppendEntriesRequest AppendEntriesRequest { get; set; }
+        Guid RequestId { get; set; }
 
         [ProtoMember(3)]
+        public AppendEntriesRequest AppendEntriesRequest { get; set; }
+
+        [ProtoMember(4)]
         public VoteRequest VoteRequest { get; set; }
 
         private RequestMessage(
             Guid requestId,
             AppendEntriesRequest appendEntriesRequest,
-            VoteRequest voteRequest)
+            VoteRequest voteRequest,
+            int nodeId)
         {
             RequestId = requestId;
             AppendEntriesRequest = appendEntriesRequest;
@@ -28,14 +32,20 @@ namespace RaftCraft.Domain
 
         public RequestMessage() { }
 
-        public static RequestMessage AppendEntries(Guid requestId, AppendEntriesRequest appendEntries)
+        public static RequestMessage AppendEntries(
+            int nodeId,
+            Guid requestId, 
+            AppendEntriesRequest appendEntries)
         {
-            return new RequestMessage(requestId, appendEntries, null);
+            return new RequestMessage(requestId, appendEntries, null, nodeId);
         }
 
-        public static RequestMessage Vote(Guid requestId, VoteRequest vote)
+        public static RequestMessage Vote(
+            int nodeId,
+            Guid requestId, 
+            VoteRequest vote)
         {
-            return new RequestMessage(requestId, null, vote);
+            return new RequestMessage(requestId, null, vote, nodeId);
         }
     }
 
