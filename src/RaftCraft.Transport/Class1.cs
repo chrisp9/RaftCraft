@@ -7,7 +7,7 @@ using WebSocketSharp.Server;
 
 namespace RaftCraft.Transport
 {
-    public class WebSocketServer : WebSocketBehavior, IServer
+    public class RaftServer : WebSocketBehavior, IServer
     {
         protected override void OnMessage(MessageEventArgs e)
         {
@@ -21,7 +21,7 @@ namespace RaftCraft.Transport
 
         public void Start()
         {
-            throw new NotImplementedException();
+
         }
     }
 }

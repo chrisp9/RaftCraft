@@ -5,7 +5,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="Library.fs" />
+    <Compile Include="RaftStateMachine.fs" />
+    <Compile Include="RaftNode.fs" />
+    <Compile Include="RaftSystem.fs" />
   </ItemGroup>
 
   <ItemGroup>
