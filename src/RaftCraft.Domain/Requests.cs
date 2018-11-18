@@ -43,6 +43,17 @@ namespace RaftCraft.Domain
             VoteResponse = voteResponse;
         }
 
+        public override string ToString()
+        {
+            return $"{nameof(RequestMessage)}: " +
+                $"NodeId: {NodeId}, " +
+                $"RequestId: {RequestId}, " +
+                $"AppendEntriesRequest: {AppendEntriesRequest}, " +
+                $"AppendEntriesResponse: {AppendEntriesResponse}, " +
+                $"VoteRequest: {VoteRequest}, " +
+                $"VoteResponse: {VoteResponse}";
+        }
+
         public RequestMessage() { }
 
         public static RequestMessage NewAppendEntiresRequest(
@@ -134,6 +145,11 @@ namespace RaftCraft.Domain
         }
 
         public AppendEntriesRequest() { }
+
+        public override string ToString()
+        {
+
+        }
     }
 
     [ProtoContract]

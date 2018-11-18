@@ -25,8 +25,14 @@ type RaftNode
     // the first election is triggered as a result of not receiving AppendEntries from a leader.
     let raftState = ref (new NodeState(RaftRole.Follower, 0))
 
+    let clients = 
+        configuration.Peers 
+        |> Seq.map(fun node -> node.NodeId, clientFactory.Invoke(node))
+        |> dict
+
     let onMessage (request : RequestMessage) =
         match 
+            // Custom operator wraps (nullable) reference types from C# as Option<T> for pattern matching.
             !?request.AppendEntriesRequest,
             !?request.AppendEntriesResponse, 
             !?request.VoteRequest, 
@@ -37,6 +43,24 @@ type RaftNode
                 | _, _, Some voteReq, _   -> handleVoteRequest request.NodeId voteReq
                 | _, _, _, Some voteRes   -> handleVoteResponse request.NodeId voteRes
                 | _ -> invalidOp("invalid message!")
+    
+    let transitionToCandidateState() =
+        raftState := new NodeState(RaftRole.Candidate, raftState.Value.Term + 1)
+
+        clients 
+        |> Seq.iter(fun client -> 
+            client.Value.Post(
+                RequestMessage.NewVoteRequest(
+                    configuration.Self.NodeId, 
+                    Guid.NewGuid(), 
+                    new VoteRequest(raftState.Value.Term, client.Key, 1, 1)))) // TODO hardcoded ints.
+        ()
+
+    let transition oldState newState =
+        match newState with
+            | RaftRole.Candidate -> transitionToCandidateState()
+            | RaftRole.Follower -> NotImplementedException() |> raise
+            | RaftRole.Leader -> NotImplementedException() |> raise
 
     // Agent ensures that messages from multiple connections (threads) are handled serially. Ensures thread safety.
     // It also means we need to be careful for example, if ElectionTimeout happens but gets queued behind an incoming
@@ -47,7 +71,7 @@ type RaftNode
 
             match msg with
                 | Request req -> onMessage(req)
-                | Transition (old, upd) -> ()
+                | Transition (old, upd) -> transition old upd
 
             return! messageLoop()
         }
@@ -59,18 +83,13 @@ type RaftNode
         electionTimer.Observable() 
             |> Observable.subscribe(fun _ -> 
                    let currentState = raftState.Value
-                   agent.Post(DomainEvent.Transition(currentState, RaftRole.Follower)))
+                   agent.Post(DomainEvent.Transition(currentState, RaftRole.Candidate)))
 
     member __.Server = serverFactory.Invoke(configuration.Self)
 
-    member __.Clients = 
-        configuration.Peers 
-        |> Seq.map(fun node -> node.NodeId, clientFactory.Invoke(node))
-        |> dict
-
     member this.Start() =
         this.Server.Start (fun msg -> agent.Post(DomainEvent.Request(msg)))
-        this.Clients |> Seq.iter(fun client -> client.Value.Start())
+        clients |> Seq.iter(fun client -> client.Value.Start())
 
         electionTimer.Start()
    
