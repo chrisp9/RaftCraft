@@ -4,7 +4,6 @@ using RaftCraft.Domain;
 using RaftCraft.Interfaces;
 using System;
 using System.IO;
-using System.Threading.Tasks;
 
 namespace RaftCraft.Transport
 {

@@ -3,11 +3,19 @@ namespace RaftCraft.Raft
 open System
 open RaftCraft.Interfaces
 open RaftCraft.Domain
-
-
+open RaftCraft.Operators
 
 type RaftNode(serverFactory : Func<string, IRaftHost>, clientFactory : Func<string, IRaftPeer>, configuration : Configuration) =
-    let onMessage = Action<_>(fun x -> ())
+
+    let handleAppendEntries id appendEntries = ()
+    let handleVote id vote = ()
+
+    let onMessage = Action<RequestMessage>(fun request ->
+        match !?request.AppendEntriesRequest, !?request.VoteRequest with
+            | Some append, _ -> handleAppendEntries request.NodeId append
+            | _, Some vote   -> handleVote request.NodeId vote
+            | _ -> invalidOp("invalid message!")
+        ())
 
     member this.Server = serverFactory.Invoke(configuration.SelfAddress)
 
