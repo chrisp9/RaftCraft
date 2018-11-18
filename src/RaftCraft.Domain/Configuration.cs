@@ -1,30 +1,48 @@
-﻿namespace RaftCraft.Domain
+﻿using System;
+
+namespace RaftCraft.Domain
 {
+    [Serializable]
     public class RaftPeer
     {
-        public string Address { get; }
+        public int NodeId { get; set; }
 
-        public int NodeId { get; }
+        public string Address { get; set; }
 
-        public RaftPeer(string address, int nodeId)
+        public RaftPeer(int nodeId, string address)
         {
-            Address = address;
             NodeId = nodeId;
+            Address = address;
         }
     }
 
-    public class Configuration
+    [Serializable]
+    public class RaftHost
     {
-        public string SelfAddress { get; }
+        public int NodeId { get; set; }
 
-        public RaftPeer[] PeerAddressses { get; }
+        public string Address { get; set; }
 
-        public Configuration(
-            string selfAddress, 
-            RaftPeer[] peerAddresses)
+        public RaftHost(int nodeId, string address)
         {
-            SelfAddress = selfAddress ?? string.Empty;
-            PeerAddressses = peerAddresses ?? new RaftPeer[0];
+            NodeId = nodeId;
+            Address = address;
+        }
+    }
+
+    [Serializable]
+    public class RaftConfiguration
+    {
+        public RaftHost Self { get; set; }
+
+        public RaftPeer[] Peers { get; set; }
+
+        public RaftConfiguration(
+            RaftHost self, 
+            RaftPeer[] peers)
+        {
+            Self = self;
+            Peers = peers ?? new RaftPeer[0];
         }
     }
 }

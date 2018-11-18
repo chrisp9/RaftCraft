@@ -1,0 +1,20 @@
+{
+    "Self": {
+      "NodeId": 1,
+      "Address": "ws://localhost:2500"
+    },
+    "Peers": [
+      {
+        "NodeId": 1,
+        "Address": "ws://localhost:2500"
+      },
+      {
+        "NodeId": 2,
+        "Address": "ws://localhost:2501"
+      },
+      {
+        "NodeId": 3,
+        "Address": "ws://localhost:2502"
+      }
+    ]
+}

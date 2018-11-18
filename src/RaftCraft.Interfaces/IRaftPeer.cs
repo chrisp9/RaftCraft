@@ -1,5 +1,4 @@
 ﻿using RaftCraft.Domain;
-using System;
 
 namespace RaftCraft.Interfaces
 {
@@ -7,10 +6,5 @@ namespace RaftCraft.Interfaces
     {
         void PostResponse(RequestMessage message);
         void Start();
-    }
-
-    public interface IRaftHost
-    {
-        void Start(Action<RequestMessage> onMessage);
     }
 }

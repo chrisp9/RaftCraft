@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using RaftCraft.Domain;
+using System.IO;
 
 namespace RaftCraft.Sample
 {
@@ -6,7 +8,9 @@ namespace RaftCraft.Sample
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Hello World!");
+            var configString = File.ReadAllText("AppConfig.json");
+            var converted = JsonConvert.DeserializeObject<RaftConfiguration>(configString);
+            var item = JsonConvert.SerializeObject(configuration);
         }
     }
 }
