@@ -1,0 +1,40 @@
+namespace RaftCraft.Domain
+
+type AppendEntriesRequest =
+    {
+        RequestId : int;
+        Term : int;
+        leaderId : int;
+        prevLogIndex : int;
+        entries : byte[][];
+    }
+
+type AppendEntriesResponse =
+    {
+        RequestId : int;
+        Successful : bool
+    }
+
+type VoteRequest =
+    { 
+        RequestId : int;
+        Term : int;
+        CandidateId : int;
+        LastLogIndex : int;
+        LastLogTerm : int;
+    }
+
+type VoteResponse =
+    {
+        RequestId : int;
+        Term : int;
+        VoteGranted : bool;
+    }
+
+type RequestMessage =
+    | AppendEntries of AppendEntriesRequest
+    | Vote of VoteRequest
+
+type ResponseMessage =
+    | AppendEntries of AppendEntriesResponse
+    | Vote of VoteResponse
