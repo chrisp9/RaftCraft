@@ -5,7 +5,7 @@ open RaftCraft.Interfaces
 open RaftCraft.Domain
 open RaftCraft.Operators
 
-type RaftNode(serverFactory : Func<string, IRaftHost>, clientFactory : Func<string, IRaftPeer>, configuration : RaftConfiguration) =
+type RaftNode(serverFactory : Func<RaftHost, IRaftHost>, clientFactory : Func<RaftPeer, IRaftPeer>, configuration : RaftConfiguration) =
 
     let handleAppendEntries id appendEntries = ()
     let handleVote id vote = ()
@@ -17,11 +17,11 @@ type RaftNode(serverFactory : Func<string, IRaftHost>, clientFactory : Func<stri
             | _ -> invalidOp("invalid message!")
         ())
 
-    member this.Server = serverFactory.Invoke(configuration.Self.Address)
+    member this.Server = serverFactory.Invoke(configuration.Self)
 
     member this.Clients = 
         configuration.Peers 
-        |> Seq.map(fun node -> node.NodeId, clientFactory.Invoke(node.Address))
+        |> Seq.map(fun node -> node.NodeId, clientFactory.Invoke(node))
         |> dict
 
     member this.Start() =

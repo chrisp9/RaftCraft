@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace RaftCraft.Transport
 {
-    class PersistentWebSocketClient : IRaftPeer
+    public class PersistentWebSocketClient : IRaftPeer
     {
         private readonly RaftPeer _peer;
         private readonly Func<RaftPeer, TransientWebSocketClient> _clientFactory;

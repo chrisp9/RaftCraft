@@ -11,6 +11,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\RaftCraft.Domain\RaftCraft.Domain.csproj" />
+    <ProjectReference Include="..\RaftCraft.Raft\RaftCraft.Raft.fsproj" />
+    <ProjectReference Include="..\RaftCraft.Transport\RaftCraft.Transport.csproj" />
   </ItemGroup>
 
   <ItemGroup>
