@@ -2,13 +2,14 @@
 
 type Term = int
 
-type RaftState =
-    | Follower of Term
-    | Leader of Term
-    | Candidate of Term
+type NodeState(raftRole, term) =
+    member __.RaftRole = raftRole
+    member __.Term = term
 
-    member this.GetTerm() =
-        match this with
-            | Follower term -> term
-            | Leader term -> term
-            | Candidate term -> term
+    member __.AdvanceTo(target : NodeState) =
+        NodeState(target.RaftRole, (target.Term + 1))
+
+type RaftRole =
+    | Follower
+    | Leader
+    | Candidate

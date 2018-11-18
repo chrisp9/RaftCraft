@@ -8,6 +8,7 @@ open RaftCraft.RaftDomain
 open RaftStateMachine
 open RaftCraft
 open RaftCraft.ElectionTimer
+open System.Xml.Linq
 
 type RaftNode
         (serverFactory : Func<RaftHost, IRaftHost>, 
@@ -24,7 +25,7 @@ type RaftNode
 
     // Initially each node is a follower. On startup of the cluster, everyone is initially a follower until 
     // the first election is triggered as a result of not receiving AppendEntries from a leader.
-    let raftState = ref (RaftState.Follower 0)
+    let raftState = ref (new NodeState(RaftRole.Follower, 0))
 
     let onMessage (request : RequestMessage) =
         match 
@@ -59,8 +60,8 @@ type RaftNode
     let electionObservable = 
         electionTimer.Observable() 
         |> Observable.subscribe(fun _ -> 
-            let currentState = raftState.Value
-            agent.Post(DomainEvent.Transition(currentState, RaftState.Candidate(currentState.GetTerm() + 1))))
+               let currentState = raftState.Value
+               agent.Post(DomainEvent.Transition(currentState, RaftRole.Follower)))
 
     member this.Server = serverFactory.Invoke(configuration.Self)
 
@@ -74,5 +75,9 @@ type RaftNode
         this.Clients |> Seq.iter(fun client -> client.Value.Start())
 
         electionTimer.Start()
+   
+    member this.Stop() =
+        // TODO dispose server and clients nicely.
+        electionObservable.Dispose()
 
     //member this.State : RaftStateMachine.RaftState
