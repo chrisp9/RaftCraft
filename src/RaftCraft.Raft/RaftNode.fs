@@ -7,14 +7,23 @@ open RaftCraft.Operators
 
 type RaftNode(serverFactory : Func<RaftHost, IRaftHost>, clientFactory : Func<RaftPeer, IRaftPeer>, configuration : RaftConfiguration) =
 
-    let handleAppendEntries id appendEntries = ()
-    let handleVote id vote = ()
+    let handleAppendEntriesRequest id appendEntriesRequest = ()
+    let handleVoteRequest id voteRequest = ()
+    let handleAppendEntriesResponse id appendEntriesResponse = ()
+    let handleVoteResponse id voteResponse = ()
 
     let onMessage = Action<RequestMessage>(fun request ->
-        match !?request.AppendEntriesRequest, !?request.VoteRequest with
-            | Some append, _ -> handleAppendEntries request.NodeId append
-            | _, Some vote   -> handleVote request.NodeId vote
-            | _ -> invalidOp("invalid message!")
+        match 
+            !?request.AppendEntriesRequest,
+            !?request.AppendEntriesResponse, 
+            !?request.VoteRequest, 
+            !?request.VoteResponse 
+            with
+                | Some appendReq, _, _, _ -> handleAppendEntriesRequest request.NodeId appendReq
+                | _, Some appendRes, _, _ -> handleAppendEntriesResponse request.NodeId appendRes
+                | _, _, Some voteReq, _   -> handleVoteRequest request.NodeId voteReq
+                | _, _, _, Some voteRes   -> handleVoteResponse request.NodeId voteRes
+                | _ -> invalidOp("invalid message!")
         ())
 
     member this.Server = serverFactory.Invoke(configuration.Self)
