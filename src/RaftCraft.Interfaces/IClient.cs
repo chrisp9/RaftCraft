@@ -9,5 +9,7 @@ namespace RaftCraft.Interfaces
     public interface IClient
     {
         Task<ResponseMessage> Handle(RequestMessage request);
+
+        void Start();
     }
 }
