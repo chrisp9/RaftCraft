@@ -5,9 +5,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="ElectionTimer.fs" />
+    <Compile Include="RaftStateMachine.fs" />
     <Compile Include="RaftDomain.fs" />
     <Compile Include="Operators.fs" />
-    <Compile Include="RaftStateMachine.fs" />
     <Compile Include="RaftNode.fs" />
     <Compile Include="RaftSystem.fs" />
   </ItemGroup>

@@ -6,15 +6,25 @@ open RaftCraft.Domain
 open RaftCraft.Operators
 open RaftCraft.RaftDomain
 open RaftStateMachine
+open RaftCraft
+open RaftCraft.ElectionTimer
 
-type RaftNode(serverFactory : Func<RaftHost, IRaftHost>, clientFactory : Func<RaftPeer, IRaftPeer>, configuration : RaftConfiguration) =
+type RaftNode
+        (serverFactory : Func<RaftHost, IRaftHost>, 
+         clientFactory : Func<RaftPeer, IRaftPeer>, 
+         configuration : RaftConfiguration) =
 
     let handleAppendEntriesRequest id appendEntriesRequest = ()
     let handleVoteRequest id voteRequest = ()
     let handleAppendEntriesResponse id appendEntriesResponse = ()
     let handleVoteResponse id voteResponse = ()
 
-    let mut raftState = RaftState.Follower 0
+    // TODO Configuration for this
+    let electionTimer = new ElectionTimer(2000.0)
+
+    // Initially each node is a follower. On startup of the cluster, everyone is initially a follower until 
+    // the first election is triggered as a result of not receiving AppendEntries from a leader.
+    let raftState = ref (RaftState.Follower 0)
 
     let onMessage (request : RequestMessage) =
         match 
@@ -38,14 +48,19 @@ type RaftNode(serverFactory : Func<RaftHost, IRaftHost>, clientFactory : Func<Ra
 
             match msg with
                 | Request req -> onMessage(req)
-                | TermExpired -> ()
-                | ElectionTimeout node -> ()
+                | Transition (old, upd) -> ()
 
             return! messageLoop()
         }
 
         messageLoop()
     )
+
+    let electionObservable = 
+        electionTimer.Observable() 
+        |> Observable.subscribe(fun _ -> 
+            let currentState = raftState.Value
+            agent.Post(DomainEvent.Transition(currentState, RaftState.Candidate(currentState.GetTerm() + 1))))
 
     member this.Server = serverFactory.Invoke(configuration.Self)
 
@@ -57,6 +72,7 @@ type RaftNode(serverFactory : Func<RaftHost, IRaftHost>, clientFactory : Func<Ra
     member this.Start() =
         this.Server.Start (fun msg -> agent.Post(DomainEvent.Request(msg)))
         this.Clients |> Seq.iter(fun client -> client.Value.Start())
-        ()
+
+        electionTimer.Start()
 
     //member this.State : RaftStateMachine.RaftState

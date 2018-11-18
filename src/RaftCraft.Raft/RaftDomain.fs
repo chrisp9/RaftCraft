@@ -2,8 +2,8 @@
 
 open RaftCraft.Domain
 open RaftCraft.Interfaces
+open RaftStateMachine
 
 type DomainEvent =
     | Request of RequestMessage
-    | TermExpired
-    | ElectionTimeout of IRaftPeer
+    | Transition of RaftState * RaftState
