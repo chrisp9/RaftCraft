@@ -22,6 +22,8 @@ namespace RaftCraft.Sample
                 converted);
 
             raftNode.Start();
+
+            Console.ReadLine();
         }
     }
 }

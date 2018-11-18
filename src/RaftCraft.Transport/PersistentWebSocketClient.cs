@@ -13,10 +13,10 @@ namespace RaftCraft.Transport
         private TransientWebSocketClient _currentClient;
 
         public PersistentWebSocketClient(
-            RaftPeer _peer, 
+            RaftPeer peer, 
             Func<RaftPeer, TransientWebSocketClient> clientFactory)
         {
-            _peer = this._peer;
+            _peer = peer;
             _clientFactory = clientFactory;
         }
 
@@ -30,7 +30,8 @@ namespace RaftCraft.Transport
 
         public void Start()
         {
-            _currentClient.OnError -= ErrorHandler;
+            if(_currentClient != null)
+                _currentClient.OnError -= ErrorHandler;
 
             _currentClient = _clientFactory(_peer);
 

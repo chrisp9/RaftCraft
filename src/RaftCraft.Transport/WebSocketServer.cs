@@ -14,6 +14,7 @@ namespace RaftCraft.Transport
 
         public RaftServer(string address)
         {
+            _address = address;
             _webSocketServer = new WebSocketServer(_address);
         }
 
