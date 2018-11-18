@@ -4,8 +4,8 @@ open System
 open RaftCraft.Interfaces
 open RaftCraft.Domain
 
-type RaftNode(serverFactory : Func<IServer>, clientFactory : Func<string, IClient>, configuration : Configuration) =
-    member this.Server = serverFactory.Invoke()
+type RaftNode(serverFactory : Func<string, IServer>, clientFactory : Func<string, IClient>, configuration : Configuration) =
+    member this.Server = serverFactory.Invoke(configuration.SelfAddress)
 
     member this.Clients = 
         configuration.PeerAddressses 
