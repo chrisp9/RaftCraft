@@ -12,7 +12,9 @@ type RaftNode(serverFactory : Func<RaftHost, IRaftHost>, clientFactory : Func<Ra
     let handleAppendEntriesResponse id appendEntriesResponse = ()
     let handleVoteResponse id voteResponse = ()
 
-    let onMessage = Action<RequestMessage>(fun request ->
+    let mut currentTerm = 0
+
+    let onMessage (request : RequestMessage) =
         match 
             !?request.AppendEntriesRequest,
             !?request.AppendEntriesResponse, 
@@ -24,7 +26,17 @@ type RaftNode(serverFactory : Func<RaftHost, IRaftHost>, clientFactory : Func<Ra
                 | _, _, Some voteReq, _   -> handleVoteRequest request.NodeId voteReq
                 | _, _, _, Some voteRes   -> handleVoteResponse request.NodeId voteRes
                 | _ -> invalidOp("invalid message!")
-        ())
+
+    // Agent ensures that messages from multiple connections (threads) are handled serially. Ensures thread safety.
+    let agent = MailboxProcessor.Start(fun inbox ->
+        let rec messageLoop() = async {
+            let! msg = inbox.Receive()
+            onMessage(msg)
+            return! messageLoop()
+
+        }
+        messageLoop()
+    )
 
     member this.Server = serverFactory.Invoke(configuration.Self)
 
@@ -34,7 +46,7 @@ type RaftNode(serverFactory : Func<RaftHost, IRaftHost>, clientFactory : Func<Ra
         |> dict
 
     member this.Start() =
-        this.Server.Start(onMessage)
+        this.Server.Start (fun msg -> agent.Post(msg))
         this.Clients |> Seq.iter(fun client -> client.Value.Start())
         ()
 
