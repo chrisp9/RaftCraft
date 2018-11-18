@@ -11,10 +11,15 @@ namespace RaftCraft.Transport
     {
         protected override void OnMessage(MessageEventArgs e)
         {
-            e.Data;
+            //e.Data;
         }
 
         public Task<ResponseMessage> Send(RequestMessage request)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Start()
         {
             throw new NotImplementedException();
         }

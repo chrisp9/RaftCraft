@@ -8,4 +8,9 @@
     <Compile Include="Library.fs" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\RaftCraft.Domain\RaftCraft.Domain.csproj" />
+    <ProjectReference Include="..\RaftCraft.Interfaces\RaftCraft.Interfaces.csproj" />
+  </ItemGroup>
+
 </Project>
