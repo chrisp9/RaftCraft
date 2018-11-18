@@ -6,9 +6,7 @@ open RaftCraft.Domain
 open RaftCraft.Operators
 open RaftCraft.RaftDomain
 open RaftStateMachine
-open RaftCraft
 open RaftCraft.ElectionTimer
-open System.Xml.Linq
 
 type RaftNode
         (serverFactory : Func<RaftHost, IRaftHost>, 
@@ -59,13 +57,13 @@ type RaftNode
 
     let electionObservable = 
         electionTimer.Observable() 
-        |> Observable.subscribe(fun _ -> 
-               let currentState = raftState.Value
-               agent.Post(DomainEvent.Transition(currentState, RaftRole.Follower)))
+            |> Observable.subscribe(fun _ -> 
+                   let currentState = raftState.Value
+                   agent.Post(DomainEvent.Transition(currentState, RaftRole.Follower)))
 
-    member this.Server = serverFactory.Invoke(configuration.Self)
+    member __.Server = serverFactory.Invoke(configuration.Self)
 
-    member this.Clients = 
+    member __.Clients = 
         configuration.Peers 
         |> Seq.map(fun node -> node.NodeId, clientFactory.Invoke(node))
         |> dict
@@ -76,8 +74,6 @@ type RaftNode
 
         electionTimer.Start()
    
-    member this.Stop() =
+    member __.Stop() =
         // TODO dispose server and clients nicely.
         electionObservable.Dispose()
-
-    //member this.State : RaftStateMachine.RaftState
