@@ -31,6 +31,7 @@ type RaftNode
         |> dict
 
     let onMessage (request : RequestMessage) =
+        printfn "Received %s" (request.ToString())
         match 
             // Custom operator wraps (nullable) reference types from C# as Option<T> for pattern matching.
             !?request.AppendEntriesRequest,
@@ -46,6 +47,7 @@ type RaftNode
     
     let transitionToCandidateState() =
         raftState := new NodeState(RaftRole.Candidate, raftState.Value.Term + 1)
+        Console.WriteLine("Transitioning to candidate");
 
         clients 
         |> Seq.iter(fun client -> 

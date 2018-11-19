@@ -7,11 +7,16 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RaftCraft.Interfaces", "Raf
 EndProject
 Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "RaftCraft.Raft", "RaftCraft.Raft\RaftCraft.Raft.fsproj", "{8FEA3869-F4AE-4AF9-B85F-E5683A9EAED5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RaftCraft.Sample", "RaftCraft.Sample\RaftCraft.Sample.csproj", "{874C0108-380A-4926-8BAA-D36B83498E8E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RaftCraft.Sample", "RaftCraft.Sample\RaftCraft.Sample.csproj", "{874C0108-380A-4926-8BAA-D36B83498E8E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RaftCraft.Transport", "RaftCraft.Transport\RaftCraft.Transport.csproj", "{F773119C-011D-4831-8D49-4E4631B456B0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RaftCraft.Transport", "RaftCraft.Transport\RaftCraft.Transport.csproj", "{F773119C-011D-4831-8D49-4E4631B456B0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RaftCraft.Domain", "RaftCraft.Domain\RaftCraft.Domain.csproj", "{407E4318-BB48-48A4-9EAF-0268FBB1C028}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RaftCraft.Domain", "RaftCraft.Domain\RaftCraft.Domain.csproj", "{407E4318-BB48-48A4-9EAF-0268FBB1C028}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{9204F7D5-646F-4D74-A2ED-BFDDAE94B924}"
+	ProjectSection(SolutionItems) = preProject
+		..\start-cluster.ps1 = ..\start-cluster.ps1
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
