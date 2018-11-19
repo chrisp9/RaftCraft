@@ -46,12 +46,12 @@ namespace RaftCraft.Domain
         public override string ToString()
         {
             return $"{nameof(RequestMessage)}: " +
-                $"NodeId: {NodeId}, " +
-                $"RequestId: {RequestId}, " +
-                $"AppendEntriesRequest: {AppendEntriesRequest}, " +
-                $"AppendEntriesResponse: {AppendEntriesResponse}, " +
-                $"VoteRequest: {VoteRequest}, " +
-                $"VoteResponse: {VoteResponse}";
+                $"{nameof(NodeId)}: {NodeId}, " +
+                $"{nameof(RequestId)}: {RequestId}, " +
+                $"{nameof(AppendEntriesRequest)}: {AppendEntriesRequest}, " +
+                $"{nameof(AppendEntriesResponse)}: {AppendEntriesResponse}, " +
+                $"{nameof(VoteRequest)}: {VoteRequest}, " +
+                $"{nameof(VoteResponse)}: {VoteResponse}";
         }
 
         public RequestMessage() { }
@@ -118,6 +118,15 @@ namespace RaftCraft.Domain
         }
 
         public VoteRequest() { }
+
+        public override string ToString()
+        {
+            return $"{nameof(AppendEntriesRequest)}: " +
+                $"{nameof(Term)}: {Term}, " +
+                $"{nameof(CandidateId)}: {CandidateId}, " +
+                $"{nameof(LastLogIndex)}: {LastLogIndex}, " +
+                $"{nameof(LastLogTerm)}: {LastLogTerm}";
+        }
     }
 
     [ProtoContract]
@@ -148,7 +157,11 @@ namespace RaftCraft.Domain
 
         public override string ToString()
         {
-
+            return $"{nameof(AppendEntriesRequest)}: " +
+                $"{nameof(Term)}: {Term}, " +
+                $"{nameof(LeaderId)}: {LeaderId}, " +
+                $"{nameof(PrevLogIndex)}: {PrevLogIndex}, " +
+                $"{nameof(Entries)}: {Entries}";
         }
     }
 
@@ -165,6 +178,12 @@ namespace RaftCraft.Domain
         }
 
         public AppendEntriesResponse() { }
+
+        public override string ToString()
+        {
+            return $"{nameof(AppendEntriesResponse)}: " +
+                $"{nameof(Successful)}: {Successful}";
+        }
     }
 
     [ProtoContract]
@@ -181,6 +200,13 @@ namespace RaftCraft.Domain
         {
             Term = term;
             VoteGranted = voteGranted;
+        }
+
+        public override string ToString()
+        {
+            return $"{nameof(VoteResponse)}: " +
+                $"{nameof(Term)}: {Term}, " +
+                $"{nameof(VoteGranted)}: {VoteGranted}";
         }
     }
 }

@@ -11,7 +11,9 @@ namespace RaftCraft.Sample
     {
         static void Main(string[] args)
         {
-            var configString = File.ReadAllText("AppConfig.json");
+            var configLocation = args.Length == 0 ? "AppConfig.json" : args[0];
+
+            var configString = File.ReadAllText(configLocation);
             var converted = JsonConvert.DeserializeObject<RaftConfiguration>(configString);
 
             Func<RaftPeer, TransientWebSocketClient> socketFactory = peer => TransientWebSocketClient.Create(peer.Address);
