@@ -29,21 +29,30 @@ type RaftNode
         configuration.Peers 
         |> Seq.map(fun node -> node.NodeId, clientFactory.Invoke(node))
         |> dict
+        
+    let (|AppendEntriesRequest|_|) (request: RequestMessage) =
+        !?request.AppendEntriesRequest
+    
+    let (|AppendEntriesResponse|_|) (request: RequestMessage) =
+        !?request.AppendEntriesResponse
+
+    let (|VoteRequest|_|) (request: RequestMessage) =
+        !?request.VoteRequest
+    
+    let (|VoteResponse|_|) (request: RequestMessage) =
+        !?request.VoteResponse
 
     let onMessage (request : RequestMessage) =
+
         printfn "Received %s" (request.ToString())
-        match 
-            // Custom operator wraps (nullable) reference types from C# as Option<T> for pattern matching.
-            !?request.AppendEntriesRequest,
-            !?request.AppendEntriesResponse, 
-            !?request.VoteRequest, 
-            !?request.VoteResponse 
-            with
-                | Some appendReq, _, _, _ -> handleAppendEntriesRequest request.NodeId appendReq
-                | _, Some appendRes, _, _ -> handleAppendEntriesResponse request.NodeId appendRes
-                | _, _, Some voteReq, _   -> handleVoteRequest request.NodeId voteReq
-                | _, _, _, Some voteRes   -> handleVoteResponse request.NodeId voteRes
-                | _ -> invalidOp("invalid message!")
+
+        match request with
+            | AppendEntriesRequest r  -> handleAppendEntriesRequest request.NodeId r
+            | AppendEntriesResponse r -> handleAppendEntriesResponse request.NodeId r
+            | VoteRequest r           -> handleVoteRequest request.NodeId r
+            | VoteResponse r          -> handleVoteResponse request.NodeId r
+            | _                       ->  invalidOp("Unknown message") |> raise // TODO deal with this better
+
     
     let transitionToCandidateState() =
         raftState := new NodeState(RaftRole.Candidate, raftState.Value.Term + 1)
