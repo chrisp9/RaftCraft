@@ -23,8 +23,10 @@ namespace RaftCraft.Transport
         public void Post(RequestMessage message)
         {
             // TODO handle exceptions properly.
+
+            Console.WriteLine("Sending request: " + message);
             _currentClient.PostResponse(message).ContinueWith(
-                t => Debug.Fail($"Exception whilst sending {t.Exception}"), 
+                t => Console.WriteLine(t.Exception?.ToString()), 
                 TaskContinuationOptions.OnlyOnFaulted);
         }
 

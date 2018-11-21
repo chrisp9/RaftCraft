@@ -14,7 +14,7 @@ type RaftNode
          configuration : RaftConfiguration) =
 
     let handleAppendEntriesRequest id appendEntriesRequest = ()
-    let handleVoteRequest id voteRequest = ()
+    let handleVoteRequest id voteRequest = printfn "VoteRequest Received"
     let handleAppendEntriesResponse id appendEntriesResponse = ()
     let handleVoteResponse id voteResponse = ()
 
@@ -51,9 +51,8 @@ type RaftNode
             | AppendEntriesResponse r -> handleAppendEntriesResponse request.NodeId r
             | VoteRequest r           -> handleVoteRequest request.NodeId r
             | VoteResponse r          -> handleVoteResponse request.NodeId r
-            | _                       ->  invalidOp("Unknown message") |> raise // TODO deal with this better
+            | _                       -> invalidOp("Unknown message") |> raise // TODO deal with this better
 
-    
     let transitionToCandidateState() =
         raftState := new NodeState(RaftRole.Candidate, raftState.Value.Term + 1)
         Console.WriteLine("Transitioning to candidate");

@@ -11,6 +11,12 @@ namespace RaftCraft.Sample
     {
         static void Main(string[] args)
         {
+            AppDomain.CurrentDomain.UnhandledException += (_, e) =>
+            {
+                Console.WriteLine(e.ExceptionObject);
+                Console.WriteLine("CRITICAL: Process is about to abort. Press any key to exit");
+                Console.ReadKey();
+            };
             var configLocation = args.Length == 0 ? "AppConfig.json" : args[0];
 
             var configString = File.ReadAllText(configLocation);

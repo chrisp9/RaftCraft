@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "RaftCraft.Sample": {
+      "commandName": "Project",
+      "commandLineArgs": "AppConfig_node3.json"
+    }
+  }
+}

@@ -121,7 +121,7 @@ namespace RaftCraft.Domain
 
         public override string ToString()
         {
-            return $"{nameof(AppendEntriesRequest)}: " +
+            return $"{nameof(VoteRequest)}: " +
                 $"{nameof(Term)}: {Term}, " +
                 $"{nameof(CandidateId)}: {CandidateId}, " +
                 $"{nameof(LastLogIndex)}: {LastLogIndex}, " +

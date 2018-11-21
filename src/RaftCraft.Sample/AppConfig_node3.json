@@ -1,6 +1,6 @@
 {
     "Self": {
-      "NodeId": 1,
+      "NodeId": 3,
       "Address": "ws://127.0.0.1:2502"
     },
     "Peers": [

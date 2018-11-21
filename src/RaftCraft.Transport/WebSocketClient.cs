@@ -26,7 +26,7 @@ namespace RaftCraft.Transport
 
         public static TransientWebSocketClient Create(string uri)
         {
-            return new TransientWebSocketClient(uri);
+            return new TransientWebSocketClient(uri + "/raft");
         }
 
         public async Task PostResponse(RequestMessage message)
@@ -44,7 +44,7 @@ namespace RaftCraft.Transport
 
         public void Start()
         {
-            if (_ws == null)
+         if (_ws == null)
             {
                 _ws = new ClientWebSocket();
                 _ws.Options.KeepAliveInterval = TimeSpan.FromSeconds(20);
@@ -124,7 +124,16 @@ namespace RaftCraft.Transport
             if (_ws != null)
             {
                 if (_ws.State != WebSocketState.Open)
-                    await _ws.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, string.Empty, CancellationToken.None);
+                {
+                    try
+                    {
+                        await _ws.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, string.Empty, CancellationToken.None);
+                    }
+                    catch(Exception e)
+                    {
+                        Console.WriteLine("Exception during socket close: " + e);
+                    }
+                }
                 _ws.Dispose();
                 _ws = null;
 
