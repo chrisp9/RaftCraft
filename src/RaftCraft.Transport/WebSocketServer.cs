@@ -8,11 +8,11 @@ using WebSocketSharp.Server;
 
 namespace RaftCraft.Transport
 {
-    public class WebSocketBehav : WebSocketBehavior
+    public class Behavior : WebSocketBehavior
     {
         private Action<RequestMessage> _onMessage;
 
-        public WebSocketBehav(Action<RequestMessage> onMessage)
+        public Behavior(Action<RequestMessage> onMessage)
         {
             _onMessage = onMessage;
         }
@@ -49,7 +49,7 @@ namespace RaftCraft.Transport
             _webSocketServer.Start();
 
             // TODO yuck. Allocation Land.
-            _webSocketServer.AddWebSocketService("/raft", () => new WebSocketBehav(onMessage));
+            _webSocketServer.AddWebSocketService("/raft", () => new Behavior(onMessage));
         }
     }
 }
