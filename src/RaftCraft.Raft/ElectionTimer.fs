@@ -4,6 +4,8 @@ open System.Threading
 open System.Timers
 open RaftCraft.Interfaces
 open System.Collections.Generic
+open System
+open System.Collections.Concurrent
 
 type TimerTick() = 
     // TODO Overflow considerations(?)
@@ -14,10 +16,13 @@ type TimerTick() =
 
     member __.Ticks = ticks.Value
 
-type ElectionTimer(electionTimerGranularity : int64, electionTimerTimeout : int64) =
+type ElectionTimer(electionTimerTimeout : int64) =
     let peerExpiries = Dictionary<IRaftPeer, int64>()
     let ticks = TimerTick() 
     let rng = Random()
+
+    // So the timer ticks (checks for election timeout) every 50ms
+    let electionTimerGranularity = int64 50
 
     let createTimer() =
         let timer = new Timer(float electionTimerGranularity)
@@ -25,28 +30,46 @@ type ElectionTimer(electionTimerGranularity : int64, electionTimerTimeout : int6
         timer
 
     let timer = createTimer()
-    let observable = timer.Elapsed
+    let observable = timer.Elapsed 
+    let insideStateTransition = ref 0
+    let timerResetQueue = ConcurrentQueue<IRaftPeer>()
 
-    member this.Observable() = 
+    let stateTransition() =
+        // Interlocked needed in case we have two overlapping timer ticks. Ticks happen on the thread pool so this could happen.
+        // If this happens, we want the second tick to early out.
+        if Interlocked.CompareExchange(insideStateTransition, 1, 0) = 0 then
+            let currentTicks = ticks.Tick() 
+
+            try
+                while timerResetQueue.Count > 0 do
+                    let success, peer = timerResetQueue.TryDequeue()
+                    if success then
+                        let expiry = electionTimerTimeout / electionTimerGranularity
+                        peerExpiries.[peer] = currentTicks + expiry |> ignore
+
+                let itemsToRemove = peerExpiries |> Dict.tryRemove(fun expiryCandidate -> expiryCandidate.Value <= currentTicks)
+                itemsToRemove |> Option.map(fun v -> v.Key)
+
+            finally
+                Interlocked.Exchange(insideStateTransition, 0) |> ignore
+        else
+            None
+
+    member __.Observable() = 
         // NOTE Only one item can expire per tick granulariy (primarily to avoid excessive allocations each expiry)
         // This means a sensible (small) tick granularity should be chosen to avoid this causing problems
         // Also this observable isn't pure because it mutates tick state. However, it exposes a clean interface to
         // consumers. For large numbers of peers, it won't be efficient and would require a rethink.
         observable
-        |> Observable.map(fun _ -> ticks.Tick())
-        |> Observable.choose(fun tick -> 
-            peerExpiries 
-            |> Dict.tryRemove(fun expiryCandidate -> expiryCandidate.Value <= tick)
-            |> Option.map(fun v -> v.Value))
+        |> Observable.map(fun _ -> stateTransition())
+        |> Observable.choose(fun expiredPeer -> expiredPeer)
     
-    member this.ResetTimer(peer: IRaftPeer) =
-        let currentTicks = ticks.Ticks
-        let expiry = electionTimerTimeout / electionTimerGranularity
-        peerExpiries.[peer] = currentTicks + expiry |> ignore
-        ()
+    member __.ResetTimer(peer: IRaftPeer) =
+        timerResetQueue.Enqueue(peer)
 
-    member this.Start() =
+    member __.Start() =
         timer.Start()
         ()
     
-    member this.Stop() = timer.Stop()
+    member __.Stop() = 
+        timer.Stop()
