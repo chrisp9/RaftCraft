@@ -2,12 +2,10 @@
 
 type Term = int
 
-type NodeState(raftRole, term) =
+type NodeState(raftRole, term : int) =
     member __.RaftRole = raftRole
     member __.Term = term
-
-    member __.AdvanceTo(target : NodeState) =
-        NodeState(target.RaftRole, (target.Term + 1))
+    member val VotedFor : int option = Option.None with get, set
 
 type RaftRole =
     | Follower

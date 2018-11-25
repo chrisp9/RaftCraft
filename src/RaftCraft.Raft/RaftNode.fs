@@ -54,8 +54,14 @@ type RaftNode
             | _                       -> invalidOp("Unknown message") |> raise // TODO deal with this better
 
     let transitionToCandidateState() =
-        raftState := new NodeState(RaftRole.Candidate, raftState.Value.Term + 1)
         Console.WriteLine("Transitioning to candidate");
+
+        // Transition to candidate and vote for self
+        raftState := new NodeState(RaftRole.Candidate, raftState.Value.Term + 1)
+        raftState.Value.VotedFor <- Some configuration.Self.NodeId
+
+        electionTimer.ResetTimer()
+        // TODO More
 
         clients 
         |> Seq.iter(fun client -> 
