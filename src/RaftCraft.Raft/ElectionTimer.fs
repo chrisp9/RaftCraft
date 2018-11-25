@@ -26,7 +26,7 @@ type ElectionTimer(electionTimerTimeout : int64) =
 
     let createTimer() =
         let timer = new Timer(float electionTimerGranularity)
-        timer.AutoReset <- false
+        timer.AutoReset <- true
         timer
 
     let timer = createTimer()
@@ -47,8 +47,10 @@ type ElectionTimer(electionTimerTimeout : int64) =
                     if success then
                         // The the expiry tick is calculated as currentTicks + the number of timer granularities 
                         // + a random fuzz factor to avoid split election results.
-                        let expiry = currentTicks + (electionTimerTimeout / electionTimerGranularity) + int64 (rng.Next(int electionTimerGranularity) * 5)
-                        peerExpiries.[peer] = currentTicks + expiry |> ignore
+                        let fuzzFactor = int64 (rng.Next(int electionTimerGranularity) / 5)
+                        
+                        let expiry = currentTicks + (electionTimerTimeout / electionTimerGranularity) + fuzzFactor
+                        peerExpiries.[peer] <- currentTicks + expiry
 
                 let itemsToRemove = 
                     peerExpiries 
