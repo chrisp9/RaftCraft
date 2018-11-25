@@ -19,7 +19,7 @@ type RaftNode
     let handleVoteResponse id voteResponse = ()
 
     // TODO Configuration for this
-    let electionTimer = new ElectionTimer(200.0)
+    let electionTimer = new ElectionTimer(int64 200)
 
     // Initially each node is a follower. On startup of the cluster, everyone is initially a follower until 
     // the first election is triggered as a result of not receiving AppendEntries from a leader.

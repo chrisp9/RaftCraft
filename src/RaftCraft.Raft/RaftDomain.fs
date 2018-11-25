@@ -11,5 +11,3 @@ type DomainEvent =
     // as they are placed on queues. Sometimes we may want to disregard a transition of state has changed whilst on the 
     // RaftNode agent queue.
     | Transition of NodeState * RaftRole
-
-type TimerExpiry =

@@ -40,18 +40,21 @@ type ElectionTimer(electionTimerTimeout : int64) =
         if Interlocked.CompareExchange(insideStateTransition, 1, 0) = 0 then
             let currentTicks = ticks.Tick() 
 
+            // First we process queued election timer resets, then we remove any expired peers.
             try
                 while timerResetQueue.Count > 0 do
                     let success, peer = timerResetQueue.TryDequeue()
                     if success then
-                        // The the expiry tick is calculated as currentTicks + the number of timer granularities + a random fuzz factor to avoid
-                        // split election results.
+                        // The the expiry tick is calculated as currentTicks + the number of timer granularities 
+                        // + a random fuzz factor to avoid split election results.
                         let expiry = currentTicks + (electionTimerTimeout / electionTimerGranularity) + int64 (rng.Next(int electionTimerGranularity) * 5)
                         peerExpiries.[peer] = currentTicks + expiry |> ignore
 
-                let itemsToRemove = peerExpiries |> Dict.tryRemove(fun expiryCandidate -> expiryCandidate.Value <= currentTicks)
+                let itemsToRemove = 
+                    peerExpiries 
+                    |> Dict.tryRemove(fun expiryCandidate -> expiryCandidate.Value <= currentTicks)
+                
                 itemsToRemove |> Option.map(fun v -> v.Key)
-
             finally
                 Interlocked.Exchange(insideStateTransition, 0) |> ignore
         else
