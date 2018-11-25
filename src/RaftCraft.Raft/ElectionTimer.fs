@@ -36,7 +36,7 @@ type ElectionTimer(electionTimerTimeout : int64) =
 
     let stateTransition() =
         // Interlocked needed in case we have two overlapping timer ticks. Ticks happen on the thread pool so this could happen.
-        // If this happens, we want the second tick to early out.
+        // If this happens, we want the second tick to early out so that we don't have corrupt state.
         if Interlocked.CompareExchange(insideStateTransition, 1, 0) = 0 then
             let currentTicks = ticks.Tick() 
 
@@ -44,7 +44,9 @@ type ElectionTimer(electionTimerTimeout : int64) =
                 while timerResetQueue.Count > 0 do
                     let success, peer = timerResetQueue.TryDequeue()
                     if success then
-                        let expiry = electionTimerTimeout / electionTimerGranularity
+                        // The the expiry tick is calculated as currentTicks + the number of timer granularities + a random fuzz factor to avoid
+                        // split election results.
+                        let expiry = currentTicks + (electionTimerTimeout / electionTimerGranularity) + int64 (rng.Next(int electionTimerGranularity) * 5)
                         peerExpiries.[peer] = currentTicks + expiry |> ignore
 
                 let itemsToRemove = peerExpiries |> Dict.tryRemove(fun expiryCandidate -> expiryCandidate.Value <= currentTicks)
@@ -59,7 +61,9 @@ type ElectionTimer(electionTimerTimeout : int64) =
         // NOTE Only one item can expire per tick granulariy (primarily to avoid excessive allocations each expiry)
         // This means a sensible (small) tick granularity should be chosen to avoid this causing problems
         // Also this observable isn't pure because it mutates tick state. However, it exposes a clean interface to
-        // consumers. For large numbers of peers, it won't be efficient and would require a rethink.
+        // consumers. For large numbers of peers, it won't be efficient and would require a rethink (ie. keying by
+        // expiry time). 
+        // We need the mutability for performance reasons (we want to avoid System Calls for DateTime.UtcNow)
         observable
         |> Observable.map(fun _ -> stateTransition())
         |> Observable.choose(fun expiredPeer -> expiredPeer)
@@ -69,7 +73,6 @@ type ElectionTimer(electionTimerTimeout : int64) =
 
     member __.Start() =
         timer.Start()
-        ()
     
     member __.Stop() = 
         timer.Stop()
