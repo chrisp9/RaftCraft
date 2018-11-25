@@ -68,6 +68,7 @@ type ElectionTimer(electionTimerTimeout : int64) =
 
     member __.Start() =
         timer.Start()
+        reset <- true
     
     member __.Stop() = 
         timer.Stop()
