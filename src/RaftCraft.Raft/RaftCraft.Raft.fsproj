@@ -5,6 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="Dict.fs" />
     <Compile Include="ElectionTimer.fs" />
     <Compile Include="RaftStateMachine.fs" />
     <Compile Include="RaftDomain.fs" />
