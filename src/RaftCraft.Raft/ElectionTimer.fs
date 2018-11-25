@@ -2,10 +2,7 @@
 
 open System.Threading
 open System.Timers
-open RaftCraft.Interfaces
-open System.Collections.Generic
 open System
-open System.Collections.Concurrent
 
 type TimerTick() = 
     // TODO Overflow considerations(?)
@@ -17,7 +14,6 @@ type TimerTick() =
     member __.Ticks = ticks.Value
 
 type ElectionTimer(electionTimerTimeout : int64) =
-    let peerExpiries = Dictionary<IRaftPeer, int64>()
     let ticks = TimerTick() 
     let rng = Random()
 
@@ -32,7 +28,8 @@ type ElectionTimer(electionTimerTimeout : int64) =
     let timer = createTimer()
     let observable = timer.Elapsed 
     let insideStateTransition = ref 0
-    let timerResetQueue = ConcurrentQueue<IRaftPeer>()
+    let mutable reset = false
+    let mutable nextExpiry : int64 option = Option.None
 
     let stateTransition() =
         // Interlocked needed in case we have two overlapping timer ticks. Ticks happen on the thread pool so this could happen.
@@ -42,39 +39,32 @@ type ElectionTimer(electionTimerTimeout : int64) =
 
             // First we process queued election timer resets, then we remove any expired peers.
             try
-                while timerResetQueue.Count > 0 do
-                    let success, peer = timerResetQueue.TryDequeue()
-                    if success then
-                        // The the expiry tick is calculated as currentTicks + the number of timer granularities 
-                        // + a random fuzz factor to avoid split election results.
-                        let fuzzFactor = int64 (rng.Next(int electionTimerGranularity) / 5)
-                        
-                        let expiry = currentTicks + (electionTimerTimeout / electionTimerGranularity) + fuzzFactor
-                        peerExpiries.[peer] <- currentTicks + expiry
-
-                let itemsToRemove = 
-                    peerExpiries 
-                    |> Dict.tryRemove(fun expiryCandidate -> expiryCandidate.Value <= currentTicks)
+                if reset then
+                    // The the expiry tick is calculated as currentTicks + the number of timer granularities 
+                    // + a random fuzz factor to avoid split election results.
+                    let fuzzFactor = int64 (rng.Next(int electionTimerGranularity) / 5)
+                    let expiry = currentTicks + (electionTimerTimeout / electionTimerGranularity) + fuzzFactor
+                    nextExpiry <- Some expiry
+                    reset <- false
                 
-                itemsToRemove |> Option.map(fun v -> v.Key)
+                match nextExpiry with
+                    | Some v when v <= currentTicks -> 
+                        nextExpiry <- Option.None
+                        true
+                    | _ -> false
+
             finally
                 Interlocked.Exchange(insideStateTransition, 0) |> ignore
         else
-            None
+            false
 
     member __.Observable() = 
-        // NOTE Only one item can expire per tick granulariy (primarily to avoid excessive allocations each expiry)
-        // This means a sensible (small) tick granularity should be chosen to avoid this causing problems
-        // Also this observable isn't pure because it mutates tick state. However, it exposes a clean interface to
-        // consumers. For large numbers of peers, it won't be efficient and would require a rethink (ie. keying by
-        // expiry time). 
-        // We need the mutability for performance reasons (we want to avoid System Calls for DateTime.UtcNow)
         observable
         |> Observable.map(fun _ -> stateTransition())
-        |> Observable.choose(fun expiredPeer -> expiredPeer)
+        |> Observable.filter(fun expiredPeer -> expiredPeer)
     
-    member __.ResetTimer(peer: IRaftPeer) =
-        timerResetQueue.Enqueue(peer)
+    member __.ResetTimer() =
+        reset <- true
 
     member __.Start() =
         timer.Start()

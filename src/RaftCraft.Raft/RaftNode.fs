@@ -101,8 +101,7 @@ type RaftNode
         this.Server.Start (fun msg -> agent.Post(DomainEvent.Request(msg)))
         clients |> Seq.iter(fun client -> client.Value.Start())
         electionTimer.Start()
-
-        clients |> Seq.iter(fun item -> electionTimer.ResetTimer(item.Value))
+        electionTimer.ResetTimer()
    
     member __.Stop() =
         // TODO dispose server and clients nicely.
