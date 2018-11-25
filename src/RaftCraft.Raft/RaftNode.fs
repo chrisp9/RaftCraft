@@ -7,6 +7,7 @@ open RaftCraft.Operators
 open RaftCraft.RaftDomain
 open RaftStateMachine
 open RaftCraft.ElectionTimer
+open RaftCraft.Utils
 
 type RaftNode
         (serverFactory : Func<RaftHost, IRaftHost>, 
@@ -29,21 +30,8 @@ type RaftNode
         configuration.Peers 
         |> Seq.map(fun node -> node.NodeId, clientFactory.Invoke(node))
         |> dict
-        
-    let (|AppendEntriesRequest|_|) (request: RequestMessage) =
-        !?request.AppendEntriesRequest
-    
-    let (|AppendEntriesResponse|_|) (request: RequestMessage) =
-        !?request.AppendEntriesResponse
-
-    let (|VoteRequest|_|) (request: RequestMessage) =
-        !?request.VoteRequest
-    
-    let (|VoteResponse|_|) (request: RequestMessage) =
-        !?request.VoteResponse
 
     let onMessage (request : RequestMessage) =
-
         printfn "Received %s" (request.ToString())
 
         match request with
@@ -61,7 +49,7 @@ type RaftNode
         raftState.Value.VotedFor <- Some configuration.Self.NodeId
 
         electionTimer.ResetTimer()
-        // TODO More
+        // TODO More election management.
 
         clients 
         |> Seq.iter(fun client -> 
