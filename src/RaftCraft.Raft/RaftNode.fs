@@ -20,7 +20,7 @@ type RaftNode
     let handleVoteResponse id voteResponse = ()
 
     // TODO Configuration for this
-    let electionTimer = new ElectionTimer(int64 200)
+    let electionTimer = new ElectionTimer(int64 1)
 
     // Initially each node is a follower. On startup of the cluster, everyone is initially a follower until 
     // the first election is triggered as a result of not receiving AppendEntries from a leader.
@@ -95,7 +95,6 @@ type RaftNode
         this.Server.Start (fun msg -> agent.Post(DomainEvent.Request(msg)))
         clients |> Seq.iter(fun client -> client.Value.Start())
         electionTimer.Start()
-        electionTimer.ResetTimer()
    
     member __.Stop() =
         // TODO dispose server and clients nicely.
