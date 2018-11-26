@@ -4,33 +4,24 @@ open System
 open RaftCraft.Interfaces
 open RaftCraft.Domain
 open RaftCraft.RaftDomain
-open RaftStateMachine
-open RaftCraft.ElectionTimer
 open RaftCraft.Utils
 open RaftTimer
+open RaftCraft
+open Subscription
 
 type RaftNode
         (serverFactory : Func<RaftHost, IRaftHost>, 
          clientFactory : Func<RaftPeer, IRaftPeer>, 
-         configuration : RaftConfiguration) =
+         configuration : RaftConfiguration,
+         stateMachineFactory : NodeState -> RaftStateMachine) =
 
     let handleAppendEntriesRequest id appendEntriesRequest = ()
     let handleVoteRequest id voteRequest = printfn "VoteRequest Received"
     let handleAppendEntriesResponse id appendEntriesResponse = ()
     let handleVoteResponse id voteResponse = ()
 
-    // TODO Configuration for this
-    let timerHolder = GlobalTimerHolder(Func<_,_>(fun v -> new GlobalTimer(v)), int64 50)
-    let electionTimer = new ElectionTimer(timerHolder, int64 1000)
-
-    // Initially each node is a follower. On startup of the cluster, everyone is initially a follower until 
-    // the first election is triggered as a result of not receiving AppendEntries from a leader.
-    let raftState = ref (new NodeState(RaftRole.Follower, 0))
-
-    let clients = 
-        configuration.Peers 
-        |> Seq.map(fun node -> node.NodeId, clientFactory.Invoke(node))
-        |> dict
+    // Initially we are a follower, with term 0 and haven't yet voted for anyone
+    let stateMachine = stateMachineFactory(new NodeState(RaftRole.Follower, 0, Option.None))
 
     let onMessage (request : RequestMessage) =
         printfn "Received %s" (request.ToString())
@@ -42,15 +33,16 @@ type RaftNode
             | VoteResponse r          -> handleVoteResponse request.NodeId r
             | _                       -> invalidOp("Unknown message") |> raise // TODO deal with this better
 
+    let clients = 
+        configuration.Peers 
+        |> Seq.map(fun node -> node.NodeId, clientFactory.Invoke(node))
+        |> dict
+
     let transitionToCandidateState() =
         Console.WriteLine("Transitioning to candidate");
 
-        // Transition to candidate and vote for self
-        raftState := new NodeState(RaftRole.Candidate, raftState.Value.Term + 1)
-        raftState.Value.VotedFor <- Some configuration.Self.NodeId
-
-        electionTimer.Reset()
         // TODO More election management.
+        let newState = stateMachine.BecomeCandidate()
 
         clients 
         |> Seq.iter(fun client -> 
@@ -58,10 +50,10 @@ type RaftNode
                 RequestMessage.NewVoteRequest(
                     configuration.Self.NodeId, 
                     Guid.NewGuid(), 
-                    new VoteRequest(raftState.Value.Term, client.Key, 1, 1)))) // TODO hardcoded ints.
+                    new VoteRequest(newState.Term, client.Key, 1, 1)))) // TODO hardcoded ints.
         ()
 
-    let transition oldState newState =
+    let transition newState =
         match newState with
             | RaftRole.Candidate -> transitionToCandidateState()
             | RaftRole.Follower -> NotImplementedException() |> raise
@@ -76,7 +68,7 @@ type RaftNode
 
             match msg with
                 | Request req -> onMessage(req)
-                | Transition (old, upd) -> transition old upd
+                | Transition (upd) -> transition upd
 
             return! messageLoop()
         }
@@ -84,10 +76,8 @@ type RaftNode
         messageLoop()
     )
 
-    let electionSubscription = 
-        electionTimer.Subscribe(fun _ ->
-            let currentState = raftState.Value
-            agent.Post(DomainEvent.Transition(currentState, RaftRole.Candidate)))
+    member this.Post(role) =
+        agent.Post(DomainEvent.Transition(role))
 
     member __.Server = serverFactory.Invoke(configuration.Self)
 
@@ -97,4 +87,42 @@ type RaftNode
 
     member __.Stop() =
         // TODO dispose server and clients nicely.
-        electionObservable.Dispose()
+        ()
+
+and RaftStateMachine(node : RaftNode, initialState : NodeState, configuration : RaftConfiguration, electionTimerFactory : unit -> ElectionTimer) =
+    let mutable state = initialState
+    let mutable electionTimer : Subscription<Election> option = Option.None
+
+    let initializeElectionTimer() =
+        match electionTimer with
+            | Some v -> 
+                v.Dispose()
+                electionTimer <- Option.None
+            | _ -> ()
+
+        electionTimer <- electionTimerFactory().Subscribe(fun _ -> 
+            node.Post(RaftRole.Candidate)) |> Some
+
+
+    member __.BecomeFollower() : NodeState =
+         initializeElectionTimer()
+
+         state <- new NodeState(
+             RaftRole.Follower, 
+             state.Term + 1, 
+             Option.None)
+
+         state
+
+    member __.BecomeCandidate() : NodeState =
+         initializeElectionTimer()
+
+         state <- new NodeState(
+             RaftRole.Candidate, 
+             state.Term + 1, 
+             Option.None)
+        
+         electionTimer <- electionTimerFactory().Subscribe(fun _ -> 
+            node.Post(RaftRole.Follower)) |> Some
+
+         state

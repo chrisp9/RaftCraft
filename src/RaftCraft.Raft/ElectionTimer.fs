@@ -1,4 +1,4 @@
-﻿module RaftCraft.ElectionTimer
+﻿module RaftCraft
 
 open System
 open RaftTimer
@@ -24,10 +24,10 @@ type ElectionTimer(timer : GlobalTimerHolder, electionTimerTimeout : int64) =
             | v when v.Expiry <= tick.CurrentTick -> true
             | _ -> false
 
+    member __.Reset() =
+        timerExpiry.Reset(getNextExpiry())
+
     member __.Subscribe f =
         timer.Observable() 
             |> Observable.filter(expiryCheck) 
-            |> Subscription<ElectionSubscription>.Subscribe(f)
-
-    member __.Reset() =
-        timerExpiry.Reset(getNextExpiry())
+            |> Subscription<Election>.subscribe f (fun() -> timerExpiry.Reset(getNextExpiry()))

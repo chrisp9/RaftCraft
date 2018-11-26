@@ -2,11 +2,17 @@
 
 open System
 
-type ElectionSubscription() = class end
+type Election() = class end
 
-type Subscription<'a>(underlyingDisposable : IDisposable) =
+type Subscription<'a>(underlyingDisposable : IDisposable, reset : unit -> unit) =
+    let dispose() = underlyingDisposable.Dispose()
+    let reset() = reset()
+
+    member this.Dispose() = dispose()
+    member this.Reset() = reset()
+
     interface IDisposable with
-        member __.Dispose() = underlyingDisposable.Dispose()
+        member __.Dispose() = dispose()
 
-    static member Subscribe<'b> (observe : 'b -> unit) (observable : IObservable<'b>) =
-        new Subscription<'a>(observable.Subscribe(observe))
+    static member subscribe<'b> (observe : 'b -> unit) (reset : unit -> unit) (observable : IObservable<'b>) =
+        new Subscription<'a>(observable.Subscribe(observe), reset)

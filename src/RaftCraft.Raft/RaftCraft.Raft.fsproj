@@ -11,8 +11,8 @@
     <Compile Include="Dict.fs" />
     <Compile Include="GlobalTimer.fs" />
     <Compile Include="ElectionTimer.fs" />
-    <Compile Include="RaftStateMachine.fs" />
     <Compile Include="RaftDomain.fs" />
+    <Compile Include="CandidateAgent.fs" />
     <Compile Include="RaftNode.fs" />
     <Compile Include="RaftSystem.fs" />
   </ItemGroup>
