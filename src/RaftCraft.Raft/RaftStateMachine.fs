@@ -25,6 +25,8 @@ type RaftStateMachine(initialState : NodeState, configuration : RaftConfiguratio
         electionTimer <- electionTimerFactory().Subscribe(fun _ -> 
             eventStream.Trigger(DomainEvent.Transition(RaftRole.Candidate))) |> Some
     
+    member __.EventStream = eventStream.Publish
+
     member __.BecomeFollower() : NodeState =
          initializeElectionTimer()
 

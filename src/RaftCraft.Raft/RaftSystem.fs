@@ -14,8 +14,12 @@ type RaftSystem() =
          configuration : RaftConfiguration) =
     
         let timerHolder = GlobalTimerHolder(Func<_,_>(fun v -> new GlobalTimer(v)), int64 50)
+
         let electionTimerFactory = fun() -> ElectionTimer(timerHolder, int64 1000)
 
         let stateMachine x y = new RaftCraft.Raft.RaftStateMachine(x, y, electionTimerFactory)
 
-        new RaftNode(serverFactory, clientFactory, configuration, fun x y -> (stateMachine x y))
+        let raftNode =  RaftNode(serverFactory, clientFactory, configuration, fun x y -> (stateMachine x y))
+        timerHolder.Start()
+
+        raftNode

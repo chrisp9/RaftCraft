@@ -49,11 +49,14 @@ type RaftNode
                     Guid.NewGuid(), 
                     new VoteRequest(newState.Term, client.Key, 1, 1)))) // TODO hardcoded ints.
         ()
+    
+    let transitionToFollowerState() =
+        stateMachine.BecomeFollower() |> ignore
 
     let transition newState =
         match newState with
             | RaftRole.Candidate -> transitionToCandidateState()
-            | RaftRole.Follower -> NotImplementedException() |> raise
+            | RaftRole.Follower -> transitionToFollowerState()
             | RaftRole.Leader -> NotImplementedException() |> raise
 
     // Agent ensures that messages from multiple connections (threads) are handled serially. Ensures thread safety.
@@ -73,6 +76,8 @@ type RaftNode
         messageLoop()
     )
 
+    let subscription = stateMachine.EventStream |> Observable.subscribe(fun x -> agent.Post(x))
+
     member this.Post(role) =
         agent.Post(DomainEvent.Transition(role))
 
@@ -81,7 +86,9 @@ type RaftNode
     member this.Start() =
         this.Server.Start (fun msg -> agent.Post(DomainEvent.Request(msg)))
         clients |> Seq.iter(fun client -> client.Value.Start())
+        agent.Post(DomainEvent.Transition(RaftRole.Follower))
 
     member __.Stop() =
         // TODO dispose server and clients nicely.
+        subscription.Dispose()
         ()

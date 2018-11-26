@@ -21,11 +21,11 @@ type GlobalTimer(timerGranularity : int64) =
     // The indirection here is because we don't push the burden of handling overlapping
     // timer ticks onto consumers. So we ensure that overlapping timer ticks early out.
     let handler = ElapsedEventHandler(fun _ _ -> 
-        try
-            if Monitor.TryEnter(token) then
+        if Monitor.TryEnter(token) then
+            try
                 event.Trigger()
-        finally
-            Monitor.Exit(token))
+            finally
+                Monitor.Exit(token))
 
     let _ = timer.Elapsed.AddHandler(handler)
 
