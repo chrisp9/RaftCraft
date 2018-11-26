@@ -3,11 +3,11 @@ namespace RaftCraft.Raft
 open System
 open RaftCraft.Interfaces
 open RaftCraft.Domain
-open RaftCraft.Operators
 open RaftCraft.RaftDomain
 open RaftStateMachine
 open RaftCraft.ElectionTimer
 open RaftCraft.Utils
+open RaftTimer
 
 type RaftNode
         (serverFactory : Func<RaftHost, IRaftHost>, 
@@ -20,7 +20,8 @@ type RaftNode
     let handleVoteResponse id voteResponse = ()
 
     // TODO Configuration for this
-    let electionTimer = new ElectionTimer(int64 1)
+    let timerHolder = GlobalTimerHolder(Func<_,_>(fun v -> new GlobalTimer(v)), int64 50)
+    let electionTimer = new ElectionTimer(timerHolder, int64 1000)
 
     // Initially each node is a follower. On startup of the cluster, everyone is initially a follower until 
     // the first election is triggered as a result of not receiving AppendEntries from a leader.
@@ -48,7 +49,7 @@ type RaftNode
         raftState := new NodeState(RaftRole.Candidate, raftState.Value.Term + 1)
         raftState.Value.VotedFor <- Some configuration.Self.NodeId
 
-        electionTimer.ResetTimer()
+        electionTimer.Reset()
         // TODO More election management.
 
         clients 
@@ -83,19 +84,17 @@ type RaftNode
         messageLoop()
     )
 
-    let electionObservable = 
-        electionTimer.Observable() 
-            |> Observable.subscribe(fun args ->
-                   let currentState = raftState.Value
-                   agent.Post(DomainEvent.Transition(currentState, RaftRole.Candidate)))
+    let electionSubscription = 
+        electionTimer.Subscribe(fun _ ->
+            let currentState = raftState.Value
+            agent.Post(DomainEvent.Transition(currentState, RaftRole.Candidate)))
 
     member __.Server = serverFactory.Invoke(configuration.Self)
 
     member this.Start() =
         this.Server.Start (fun msg -> agent.Post(DomainEvent.Request(msg)))
         clients |> Seq.iter(fun client -> client.Value.Start())
-        electionTimer.Start()
-   
+
     member __.Stop() =
         // TODO dispose server and clients nicely.
         electionObservable.Dispose()

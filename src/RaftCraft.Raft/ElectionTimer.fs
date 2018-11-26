@@ -2,6 +2,7 @@
 
 open System
 open RaftTimer
+open Subscription
 
 type TimerExpiry(expiry) =
     let mutable currentExpiry : int64 = expiry
@@ -23,8 +24,10 @@ type ElectionTimer(timer : GlobalTimerHolder, electionTimerTimeout : int64) =
             | v when v.Expiry <= tick.CurrentTick -> true
             | _ -> false
 
-    member __.Observable() =
-        timer.Observable() |> Observable.filter(expiryCheck)
+    member __.Subscribe f =
+        timer.Observable() 
+            |> Observable.filter(expiryCheck) 
+            |> Subscription<ElectionSubscription>.Subscribe(f)
 
     member __.Reset() =
         timerExpiry.Reset(getNextExpiry())

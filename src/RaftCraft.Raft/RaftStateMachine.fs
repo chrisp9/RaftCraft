@@ -1,5 +1,7 @@
 ﻿module RaftStateMachine
 
+open System
+
 type Term = int
 
 type NodeState(raftRole, term : int) =
@@ -8,6 +10,6 @@ type NodeState(raftRole, term : int) =
     member val VotedFor : int option = Option.None with get, set
 
 type RaftRole =
-    | Follower
+    | Follower of IDisposable
     | Leader
     | Candidate
