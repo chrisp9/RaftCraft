@@ -6,7 +6,6 @@ type Election() = class end
 
 type Subscription<'a>(underlyingDisposable : IDisposable, reset : unit -> unit) =
     let dispose() = underlyingDisposable.Dispose()
-    let reset() = reset()
 
     member this.Dispose() = dispose()
     member this.Reset() = reset()
