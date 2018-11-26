@@ -7,12 +7,12 @@
   <ItemGroup>
     <Compile Include="Operators.fs" />
     <Compile Include="Utils.fs" />
-    <Compile Include="Observable.fs" />
+    <Compile Include="Subscription.fs" />
     <Compile Include="Dict.fs" />
     <Compile Include="GlobalTimer.fs" />
     <Compile Include="ElectionTimer.fs" />
     <Compile Include="RaftDomain.fs" />
-    <Compile Include="CandidateAgent.fs" />
+    <Compile Include="RaftStateMachine.fs" />
     <Compile Include="RaftNode.fs" />
     <Compile Include="RaftSystem.fs" />
   </ItemGroup>

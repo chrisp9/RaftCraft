@@ -1,4 +1,4 @@
-﻿module RaftCraft
+﻿namespace RaftCraft
 
 open System
 open RaftTimer

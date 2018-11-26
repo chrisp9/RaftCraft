@@ -1,10 +1,9 @@
-﻿
-module RaftSystem
+﻿module RaftSystem
+
 open System
 open RaftCraft.Domain
 open RaftCraft.Interfaces
 open RaftTimer
-open CandidateAgent
 open RaftCraft
 open RaftCraft.Raft
 
@@ -16,6 +15,7 @@ type RaftSystem() =
     
         let timerHolder = GlobalTimerHolder(Func<_,_>(fun v -> new GlobalTimer(v)), int64 50)
         let electionTimerFactory = fun() -> ElectionTimer(timerHolder, int64 1000)
-        let stateMachine = fun state -> new RaftStateMachine(state, fun() -> new CandidateAgent(electionTimerFactory))
-        
-        RaftNode(serverFactory, clientFactory, configuration, stateMachine)
+
+        let stateMachine x y = new RaftCraft.Raft.RaftStateMachine(x, y, electionTimerFactory)
+
+        new RaftNode(serverFactory, clientFactory, configuration, fun x y -> (stateMachine x y))

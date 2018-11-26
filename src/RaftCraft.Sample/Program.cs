@@ -24,12 +24,12 @@ namespace RaftCraft.Sample
 
             Func<RaftPeer, TransientWebSocketClient> socketFactory = peer => TransientWebSocketClient.Create(peer.Address);
 
-            var raftNode = new RaftNode(
-                host => new RaftServer(host.Address), 
+            var node = RaftSystem.RaftSystem.Create(
+                host => new RaftServer(host.Address),
                 peer => new PersistentWebSocketClient(peer, socketFactory), 
                 converted);
 
-            raftNode.Start();
+            node.Start();
 
             Console.ReadLine();
         }

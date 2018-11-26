@@ -1,8 +1,8 @@
-﻿module RaftCraft.Utils
+﻿module Utils
 
 open RaftCraft.Domain
-open RaftCraft.Operators
-        
+open Operators
+
 let (|AppendEntriesRequest|_|) (request: RequestMessage) =
     !?request.AppendEntriesRequest
     
