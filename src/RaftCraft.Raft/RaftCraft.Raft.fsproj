@@ -8,7 +8,7 @@
     <Compile Include="Operators.fs" />
     <Compile Include="Utils.fs" />
     <Compile Include="Dict.fs" />
-    <Compile Include="RaftTimer.fs" />
+    <Compile Include="GlobalTimer.fs" />
     <Compile Include="ElectionTimer.fs" />
     <Compile Include="RaftStateMachine.fs" />
     <Compile Include="RaftDomain.fs" />
