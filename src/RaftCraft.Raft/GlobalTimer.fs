@@ -7,7 +7,7 @@ open System
 [<Struct>]
 type TimerTick = { Granularity : int64; CurrentTick : int64 }
 
-type RaftTimer(timerGranularity : int64) =
+type GlobalTimer(timerGranularity : int64) =
     let createTimer() =
         let timer = new Timer(float timerGranularity)
         timer.AutoReset <- true
@@ -41,7 +41,7 @@ type RaftTimer(timerGranularity : int64) =
         timer.Stop()
         timer.Elapsed.RemoveHandler(handler)
 
-type RaftTimerHolder(raftTimerFactory : Func<int64, RaftTimer>, timerGranularity : int64) =
+type GlobalTimerHolder(raftTimerFactory : Func<int64, GlobalTimer>, timerGranularity : int64) =
     
     let timer = raftTimerFactory.Invoke(timerGranularity)
     let observable = timer.Observable()

@@ -8,7 +8,7 @@ type TimerExpiry(expiry) =
     member __.Expiry = expiry
     member __.Reset(expiry) = currentExpiry <- expiry
 
-type ElectionTimer(timer : RaftTimerHolder, electionTimerTimeout : int64) =
+type ElectionTimer(timer : GlobalTimerHolder, electionTimerTimeout : int64) =
     let rng = Random()
 
     let getNextExpiry() =
