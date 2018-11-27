@@ -24,3 +24,6 @@ type NodeStateHolder(initialState : NodeState) =
 type DomainEvent =
     | Request of RequestMessage
     | ElectionTimerFired
+
+[<Struct>]
+type TimerTick = { Granularity : int64; CurrentTick : int64 }

@@ -3,9 +3,7 @@
 open System.Threading
 open System.Timers
 open System
-
-[<Struct>]
-type TimerTick = { Granularity : int64; CurrentTick : int64 }
+open RaftCraft.RaftDomain
 
 type GlobalTimer(timerGranularity : int64) =
     let createTimer() =

@@ -6,12 +6,12 @@
 
   <ItemGroup>
     <Compile Include="Operators.fs" />
+    <Compile Include="RaftDomain.fs" />
     <Compile Include="Utils.fs" />
     <Compile Include="Subscription.fs" />
     <Compile Include="Dict.fs" />
     <Compile Include="GlobalTimer.fs" />
     <Compile Include="ElectionTimer.fs" />
-    <Compile Include="RaftDomain.fs" />
     <Compile Include="PeerDiplomat.fs" />
     <Compile Include="RaftNode.fs" />
     <Compile Include="RaftSystem.fs" />

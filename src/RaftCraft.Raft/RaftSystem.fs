@@ -22,8 +22,8 @@ type RaftSystem() =
 
         // We translate from Func<_> to F#Func because this code is called from C# and want to keep
         // the boundary clean.
-        let translatedServerFactory = fun v -> serverFactory.Invoke(v)
-        let translatedClientFactory = fun v -> clientFactory.Invoke(v)
+        let translatedServerFactory = serverFactory.Invoke
+        let translatedClientFactory = clientFactory.Invoke
 
         let peerSupervisorFactory = fun v -> new PeerSupervisor(configuration, v, translatedClientFactory)
 

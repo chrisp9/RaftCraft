@@ -3,6 +3,7 @@
 open System
 open RaftTimer
 open Subscription
+open RaftCraft.RaftDomain
 
 type TimerExpiry(expiry) =
     let mutable currentExpiry : int64 = expiry
