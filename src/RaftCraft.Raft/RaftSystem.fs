@@ -13,7 +13,8 @@ type RaftSystem() =
          clientFactory : Func<RaftPeer, IRaftPeer>, 
          configuration : RaftConfiguration) =
     
-        let timerHolder = GlobalTimerHolder(Func<_,_>(fun v -> new GlobalTimer(v)), int64 50)
+        let globalTimerFactory = fun v -> new GlobalTimer(v)
+        let timerHolder = GlobalTimerHolder(globalTimerFactory, int64 50)
 
         let electionTimerFactory = fun() -> ElectionTimer(timerHolder, int64 1000)
         let electionTimerHolder = ElectionTimerHolder(electionTimerFactory)

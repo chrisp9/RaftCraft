@@ -44,9 +44,9 @@ type GlobalTimer(timerGranularity : int64) =
         timer.Elapsed.RemoveHandler(handler)
 
 // Holds mutable state related to the GlobalTimer (currentTick) which is important for consumers.
-type GlobalTimerHolder(raftTimerFactory : Func<int64, GlobalTimer>, timerGranularity : int64) =
+type GlobalTimerHolder(raftTimerFactory : int64 -> GlobalTimer, timerGranularity : int64) =
     
-    let timer = raftTimerFactory.Invoke(timerGranularity)
+    let timer = raftTimerFactory timerGranularity
     let observable = timer.Observable()
     let mutable currentTick = { TimerTick.Granularity = timerGranularity; TimerTick.CurrentTick = int64 0 }
 
