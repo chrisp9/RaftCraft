@@ -13,6 +13,7 @@ type RaftSystem() =
          clientFactory : Func<RaftPeer, IRaftPeer>, 
          configuration : RaftConfiguration) =
     
+        // TODO Make the hardcoded values here configurable.
         let globalTimerFactory = fun v -> new GlobalTimer(v)
         let timerHolder = GlobalTimerHolder(globalTimerFactory, int64 50)
 
