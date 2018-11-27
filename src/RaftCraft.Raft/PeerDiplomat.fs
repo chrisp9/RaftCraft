@@ -3,9 +3,7 @@
 open RaftCraft.Interfaces
 open RaftCraft.Domain
 open System
-open System.Collections.Generic
 open Utils
-open RaftTimer
 open RaftCraft.RaftDomain
 
 type RetryCount = int
@@ -14,8 +12,8 @@ type ExpiryTick = int64
 // A diplomat is responsible for negotiating with a particular Peer. How negotation proceeds depends on
 // the political landscape. For example, if a peer does not respond to certain requests within a
 // sensible time, we need to retry that request.
-type PeerDiplomat(peer : IRaftPeer) =
-    let retryPipeline = Pipeline()
+type PeerDiplomat(peer : IRaftPeer, retryIntervalMs : int) =
+    let retryPipeline = Pipeline(retryIntervalMs)
 
     member __.Post(message : RequestMessage) =
         // TODO:
@@ -23,11 +21,14 @@ type PeerDiplomat(peer : IRaftPeer) =
             | AppendEntriesRequest req -> peer.Post(message)
             | VoteRequest req -> peer.Post(message)
             | _ -> ()
+     
+     member __.Start() =
+        peer.Start()
 
 // PeerSupervisor acts as a router layer in deciding which Peer(s) need to be contacted for a given request.
 // It exposes an Observable to let the host Node know when consensus has been reached.
 // Each new Term, it's temporary state needs to be reset.
-type PeerSupervisor(configuration : RaftConfiguration, nodeState : NodeStateHolder, clientFactory : RaftPeer -> IRaftPeer) =
+type PeerSupervisor(configuration : RaftConfiguration, nodeState : NodeStateHolder, clientFactory : RaftPeer -> PeerDiplomat) =
     let clients = 
         configuration.Peers 
         |> Seq.map(fun node -> node.NodeId, clientFactory node)
