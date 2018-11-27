@@ -85,7 +85,7 @@ type RaftNode
     member __.Server = serverFactory.Invoke(configuration.Self)
 
     member this.Start() =
-        // Important to transition to follower before starting the service to avoid race conditions.
+        // Important to transition to follower before starting the server to avoid race conditions.
         transitionToFollowerState()
         this.Server.Start (fun msg -> agent.Post(DomainEvent.Request(msg)))
         clients |> Seq.iter(fun client -> client.Value.Start())
