@@ -18,7 +18,14 @@ type RaftSystem() =
         let electionTimerFactory = fun() -> ElectionTimer(timerHolder, int64 1000)
         let electionTimerHolder = ElectionTimerHolder(electionTimerFactory)
 
-        let raftNode =  RaftNode(serverFactory, clientFactory, configuration, electionTimerHolder)
+        // We translate from Func<_> to F#Func because this code is called from C# and want to keep
+        // the boundary clean.
+        let translatedServerFactory = fun v -> serverFactory.Invoke(v)
+        let translatedClientFactory = fun v -> clientFactory.Invoke(v)
+
+        let peerSupervisorFactory = fun v -> new PeerSupervisor(configuration, v, translatedClientFactory)
+
+        let raftNode =  RaftNode(translatedServerFactory, configuration, electionTimerHolder, peerSupervisorFactory)
         timerHolder.Start()
 
         raftNode

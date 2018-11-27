@@ -8,10 +8,10 @@ open Utils
 open RaftCraft
 
 type RaftNode
-        (serverFactory : Func<RaftHost, IRaftHost>, 
-         clientFactory : Func<RaftPeer, IRaftPeer>, 
+        (serverFactory : RaftHost -> IRaftHost,
          configuration : RaftConfiguration,
-         electionTimer : ElectionTimerHolder) =
+         electionTimer : ElectionTimerHolder,
+         peerSupervisor : NodeStateHolder -> PeerSupervisor) =
 
     let handleAppendEntriesRequest id appendEntriesRequest = ()
     let handleVoteRequest id voteRequest = printfn "VoteRequest Received"
@@ -19,14 +19,11 @@ type RaftNode
     let handleVoteResponse id voteResponse = ()
 
     // Initially we are a follower at term 0 and we haven't voted for anyone.
-    let mutable nodeState = NodeState(RaftRole.Follower, 0, Option.None)
+    let nodeState = NodeState(RaftRole.Follower, 0, Option.None) |> NodeStateHolder
+    let peerSupervisor = peerSupervisor nodeState
 
     let eventStream = Event<DomainEvent>()
-
-    let clients = 
-        configuration.Peers 
-        |> Seq.map(fun node -> node.NodeId, clientFactory.Invoke(node))
-        |> dict
+    let server = serverFactory configuration.Self
 
     // Agent ensures that messages from multiple connections (threads) are handled serially.
     let agent = MailboxProcessor.Start(fun inbox ->
@@ -46,32 +43,24 @@ type RaftNode
             | AppendEntriesRequest r  -> handleAppendEntriesRequest request.NodeId r
             | AppendEntriesResponse r -> handleAppendEntriesResponse request.NodeId r
             | VoteRequest r           -> handleVoteRequest request.NodeId r
-            | VoteResponse r          -> handleVoteResponse request.NodeId r
             | _                       -> invalidOp("Unknown message") |> raise // TODO deal with this better
-
+    
     let transitionToFollowerState() =
         Console.WriteLine("Transitioning to follower")
-        nodeState <- NodeState(RaftRole.Candidate, nodeState.Term + 1, configuration.Self.NodeId |> Some)
+        nodeState.Update <| NodeState(RaftRole.Candidate, nodeState.Current().Term + 1, None)
         electionTimer.Start(fun _ -> agent.Post(DomainEvent.ElectionTimerFired))
 
     let transitionToCandidateState() =
         Console.WriteLine("Transitioning to candidate");
 
         // TODO More election management.
-        nodeState <- NodeState(RaftRole.Candidate, nodeState.Term + 1, configuration.Self.NodeId |> Some)
+        nodeState.Update <| NodeState(RaftRole.Candidate, nodeState.Current().Term + 1, Some configuration.Self.NodeId)
         electionTimer.Start(fun _ -> agent.Post(DomainEvent.ElectionTimerFired))
-    
-        clients 
-        |> Seq.iter(fun client -> 
-            client.Value.Post(
-                RequestMessage.NewVoteRequest(
-                    configuration.Self.NodeId, 
-                    Guid.NewGuid(), 
-                    new VoteRequest(nodeState.Term, client.Key, 1, 1)))) // TODO hardcoded ints.
+        peerSupervisor.VoteRequest()
         ()
 
     let electionTimerFired() =
-        match nodeState.RaftRole with
+        match nodeState.Current().RaftRole with
             | RaftRole.Candidate -> transitionToCandidateState()
             | RaftRole.Follower -> transitionToCandidateState()
             | RaftRole.Leader -> NotImplementedException() |> raise
@@ -82,13 +71,13 @@ type RaftNode
                 | DomainEvent.Request r -> onMessage(r)
                 | DomainEvent.ElectionTimerFired -> electionTimerFired())
 
-    member __.Server = serverFactory.Invoke(configuration.Self)
+    member __.Server = server
 
     member this.Start() =
         // Important to transition to follower before starting the server to avoid race conditions.
         transitionToFollowerState()
-        this.Server.Start (fun msg -> agent.Post(DomainEvent.Request(msg)))
-        clients |> Seq.iter(fun client -> client.Value.Start())
+        server.Start (fun msg -> agent.Post(DomainEvent.Request(msg)))
+        peerSupervisor.Start()
 
     member __.Stop() =
         // TODO dispose server and clients nicely.
