@@ -31,9 +31,11 @@ type GlobalTimer(timerGranularity : int64) =
 
     let createTick currentTick = {TimerTick.Granularity = timerGranularity; TimerTick.CurrentTick = int64 currentTick}
 
-    member __.Observable() =
+    let observable = 
         event.Publish
         |> Observable.scan(fun count _ -> createTick (count.CurrentTick + (int64 1))) (createTick(int64 0))
+
+    member __.Observable() = observable
 
     member __.Start() = timer.Start()
 
@@ -48,9 +50,13 @@ type GlobalTimerHolder(raftTimerFactory : Func<int64, GlobalTimer>, timerGranula
     let observable = timer.Observable()
     let mutable currentTick = { TimerTick.Granularity = timerGranularity; TimerTick.CurrentTick = int64 0 }
 
-    let currentValueSubscription = observable.Subscribe(fun value -> currentTick <- value)
+    let pushValueObservable = Event<TimerTick>()
 
-    member __.Observable() = observable
+    let currentValueSubscription = observable.Subscribe(fun value -> 
+        currentTick <- value
+        pushValueObservable.Trigger(value))
+
+    member __.Observable() = pushValueObservable.Publish
     member __.CurrentTick = currentTick
     member __.Start() = timer.Start()
     member __.Stop() = 

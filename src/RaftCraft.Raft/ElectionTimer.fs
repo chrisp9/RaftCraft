@@ -15,7 +15,8 @@ type ElectionTimer(timer : GlobalTimerHolder, electionTimerTimeout : int64) =
     let getNextExpiry() =
         let tick = timer.CurrentTick
         let fuzzFactor = int64 (rng.Next(int tick.Granularity) / 5)
-        (tick.CurrentTick + (electionTimerTimeout / tick.Granularity) + fuzzFactor)
+        let scheduledTick = (tick.CurrentTick + (electionTimerTimeout / tick.Granularity) + fuzzFactor)
+        scheduledTick
 
     let timerExpiry = TimerExpiry(getNextExpiry())
 
