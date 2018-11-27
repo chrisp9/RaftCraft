@@ -20,13 +20,18 @@ type DiplomatAction =
 type PeerDiplomat(peer : IRaftPeer, retryIntervalMs : int, timer : GlobalTimerHolder) =
     let retryPipeline = Pipeline(retryIntervalMs)
 
+    let track message =
+        match message with
+            | AppendEntriesRequest _ | VoteRequest _ -> retryPipeline.Add(message, timer.CurrentTick)
+            | _ -> ()
+
     let agent = MailboxProcessor.Start(fun inbox ->
         let rec messageLoop() = async {
             let! msg = inbox.Receive()
 
             match msg with
                 | Post request -> 
-                    retryPipeline.Add(request, timer.CurrentTick)
+                    track request
                     peer.Post request
                 | CheckExpiry tick -> ()
                     
@@ -38,15 +43,9 @@ type PeerDiplomat(peer : IRaftPeer, retryIntervalMs : int, timer : GlobalTimerHo
 
     let subscription = timer.Observable().Subscribe(fun tick -> agent.Post(DiplomatAction.CheckExpiry(tick)))
 
-
     member __.Post(message : RequestMessage) =
-        // TODO:
-        match message with
-            | AppendEntriesRequest _ | VoteRequest _ -> 
-                agent.Post(DiplomatAction.Post(message))
-                // TODO //retryPipeline.Add(message, //)
-            | _ -> ()
-     
+        agent.Post(DiplomatAction.Post(message))
+
      member __.Start() =
         peer.Start()
 
