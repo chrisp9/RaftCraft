@@ -82,4 +82,5 @@ type RaftNode
     member __.Stop() =
         // TODO dispose server and clients nicely.
         electionTimer.Stop()
+        eventStreamSubscription.Dispose()
         ()

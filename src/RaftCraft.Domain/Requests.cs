@@ -11,7 +11,7 @@ namespace RaftCraft.Domain
         public int NodeId { get; set; }
 
         [ProtoMember(2)]
-        Guid RequestId { get; set; }
+        public Guid RequestId { get; set; }
 
         [ProtoMember(3)]
         public AppendEntriesRequest AppendEntriesRequest { get; set; }
