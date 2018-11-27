@@ -32,3 +32,34 @@ type ElectionTimer(timer : GlobalTimerHolder, electionTimerTimeout : int64) =
         timer.Observable() 
             |> Observable.filter(expiryCheck) 
             |> Subscription<Election>.subscribe f (fun() -> timerExpiry.Reset(getNextExpiry()))
+
+type ElectionTimerHolder(timer : unit -> ElectionTimer) =
+    
+    let mutable electionTimer = Option.None
+    let mutable electionTimerSubscription : Subscription<Election> option = Option.None
+
+    let stop() = 
+        match electionTimerSubscription with
+            | Some v -> v.Dispose()
+            | None -> ()
+
+        electionTimer <- None
+        electionTimerSubscription <- None
+
+    member this.Stop() =
+        stop()
+
+    member __.Start(onFired : TimerTick -> unit) =
+        stop()
+        let currentTimer = timer()
+
+        electionTimer <- Some currentTimer
+        electionTimerSubscription <- Some (currentTimer.Subscribe 
+            (fun tick -> 
+                stop()
+                onFired(tick)))
+
+    member __.Reset() =
+        match electionTimerSubscription with
+            | Some value -> value.Reset()
+            | None -> ()
