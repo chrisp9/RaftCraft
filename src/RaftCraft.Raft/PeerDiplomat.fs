@@ -5,21 +5,46 @@ open RaftCraft.Domain
 open System
 open Utils
 open RaftCraft.RaftDomain
+open RaftTimer
 
 type RetryCount = int
 type ExpiryTick = int64
 
+type DiplomatAction =
+    | Post of RequestMessage
+    | CheckExpiry of TimerTick
+
 // A diplomat is responsible for negotiating with a particular Peer. How negotation proceeds depends on
 // the political landscape. For example, if a peer does not respond to certain requests within a
 // sensible time, we need to retry that request.
-type PeerDiplomat(peer : IRaftPeer, retryIntervalMs : int) =
+type PeerDiplomat(peer : IRaftPeer, retryIntervalMs : int, timer : GlobalTimerHolder) =
     let retryPipeline = Pipeline(retryIntervalMs)
+
+    let agent = MailboxProcessor.Start(fun inbox ->
+        let rec messageLoop() = async {
+            let! msg = inbox.Receive()
+
+            match msg with
+                | Post request -> 
+                    retryPipeline.Add(request, timer.CurrentTick)
+                    peer.Post request
+                | CheckExpiry tick -> ()
+                    
+            return! messageLoop()
+        }
+
+        messageLoop()
+    )
+
+    let subscription = timer.Observable().Subscribe(fun tick -> agent.Post(DiplomatAction.CheckExpiry(tick)))
+
 
     member __.Post(message : RequestMessage) =
         // TODO:
         match message with
-            | AppendEntriesRequest req -> peer.Post(message)
-            | VoteRequest req -> peer.Post(message)
+            | AppendEntriesRequest _ | VoteRequest _ -> 
+                agent.Post(DiplomatAction.Post(message))
+                // TODO //retryPipeline.Add(message, //)
             | _ -> ()
      
      member __.Start() =
