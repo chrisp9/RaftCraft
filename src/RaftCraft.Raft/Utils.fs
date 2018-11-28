@@ -34,7 +34,9 @@ type HashSetPool<'a>() =
 // Holds entries for a fixed amount of time.
 type Pipeline(retryIntervalMs : int) =
     let requestsById = Dictionary<Guid, RaftMessage>()
-    let requestsByTick = SortedDictionary<int64, HashSet<Guid>>()
+    let requestsByTick = Dictionary<int64, HashSet<Guid>>()
+
+    let token = Object()
 
     // We expect that the amortised number of ExpiryTicks will be O(1), so we benefit from pooling. We only expect 
     // entries for N time slots. At each tick, we retry any items scheduled for that tick and return this HashSet
@@ -64,11 +66,14 @@ type Pipeline(retryIntervalMs : int) =
 
         let expiryTick = currentTick.CurrentTick + ((int64 retryIntervalMs) / (int64 (currentTick.Granularity)))
 
-        let expiriesForThisTick = getOrAdd(requestsByTick, expiryTick, fun() -> pool.Borrow())
+        // Using lock here because it makes the rest of the code far simpler. I tried the alternative approach but decided
+        // the othher approach (using agents) was more complex and probably less efficient than just using a lock here.
+        lock token, fun() ->
+            let expiriesForThisTick = getOrAdd(requestsByTick, expiryTick, fun() -> pool.Borrow())
 
-        expiriesForThisTick.Add(message.RequestId) |> ignore
+            expiriesForThisTick.Add(message.RequestId) |> ignore
 
-        requestsById.[message.RequestId] <- message
+            requestsById.[message.RequestId] <- message
     
     member __.Expiry(currentTick : TimerTick) =
         let success, requestsByTick = requestsByTick.TryGetValue(currentTick.CurrentTick)

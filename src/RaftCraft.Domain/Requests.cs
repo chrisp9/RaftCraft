@@ -8,7 +8,7 @@ namespace RaftCraft.Domain
     public class RaftMessage
     {
         [ProtoMember(1)]
-        public int NodeId { get; set; }
+        public int SourceNodeId { get; set; }
 
         [ProtoMember(2)]
         public Guid RequestId { get; set; }
@@ -26,7 +26,7 @@ namespace RaftCraft.Domain
         public VoteResponse VoteResponse { get; set; }
 
         private RaftMessage(
-            int nodeId,
+            int sourceNodeId,
             Guid requestId,
             AppendEntriesRequest appendEntriesRequest,
             AppendEntriesResponse appendEntriesResponse,
@@ -34,7 +34,7 @@ namespace RaftCraft.Domain
             VoteResponse voteResponse)
         {
             RequestId = requestId;
-            NodeId = nodeId;
+            SourceNodeId = sourceNodeId;
 
             AppendEntriesRequest = appendEntriesRequest;
             AppendEntriesResponse = appendEntriesResponse;
@@ -46,7 +46,7 @@ namespace RaftCraft.Domain
         public override string ToString()
         {
             return $"{nameof(RaftMessage)}: " +
-                $"{nameof(NodeId)}: {NodeId}, " +
+                $"{nameof(SourceNodeId)}: {SourceNodeId}, " +
                 $"{nameof(RequestId)}: {RequestId}, " +
                 $"{nameof(AppendEntriesRequest)}: {AppendEntriesRequest}, " +
                 $"{nameof(AppendEntriesResponse)}: {AppendEntriesResponse}, " +
