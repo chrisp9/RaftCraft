@@ -7,12 +7,12 @@ namespace RaftCraft.Persistence
 {
     public class SlowInMemoryDataStore : IPersistentDataStore
     {
-        private List<PersistentLogEntry> _allEntries = new List<PersistentLogEntry>();
+        private List<LogEntry> _allEntries = new List<LogEntry>();
 
         private int _currentTerm = 0;
         private int _votedFor = 0;
 
-        public Task ApplyAsync(PersistentLogEntry[] logEntries)
+        public Task ApplyAsync(LogEntry[] logEntries)
         {
             _allEntries.AddRange(logEntries);
             return Task.FromResult(0);

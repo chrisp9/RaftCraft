@@ -143,9 +143,9 @@ namespace RaftCraft.Domain
         public int PrevLogIndex { get; set; }
 
         [ProtoMember(4)]
-        public byte[][] Entries { get; set; }
+        public LogEntry[] Entries { get; set; }
 
-        public AppendEntriesRequest(int term, int leaderId, int prevLogIndex, byte[][] entries)
+        public AppendEntriesRequest(int term, int leaderId, int prevLogIndex, LogEntry[] entries)
         {
             Term = term;
             LeaderId = leaderId;

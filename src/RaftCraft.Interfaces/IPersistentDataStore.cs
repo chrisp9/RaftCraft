@@ -5,7 +5,7 @@ namespace RaftCraft.Interfaces
 {
     public interface IPersistentDataStore
     {
-        Task ApplyAsync(PersistentLogEntry[] logEntries);
+        Task ApplyAsync(LogEntry[] logEntries);
         Task UpdateCurrentTermAsync(int newTerm);
         Task UpdateVotedForAsync(int candidateId);
     }
