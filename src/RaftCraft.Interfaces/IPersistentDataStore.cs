@@ -5,8 +5,7 @@ namespace RaftCraft.Interfaces
     public interface IPersistentDataStore
     {
         void Apply(LogEntry[] logEntries);
-        void UpdateCurrentTerm(int newTerm);
-        void UpdateVotedFor(int? candidateId);
+        void Update(int newTerm, int? votedFor);
 
         int LastLogIndex { get; }
         int LastLogTerm { get; }

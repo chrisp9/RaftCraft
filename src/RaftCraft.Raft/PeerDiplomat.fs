@@ -10,7 +10,6 @@ open RaftTimer
 type RetryCount = int
 type ExpiryTick = int64
 
-
 // A diplomat is responsible for negotiating with a particular Peer. How negotation proceeds depends on
 // the political landscape. For example, if a peer does not respond to certain requests within a
 // sensible time, we need to retry that request.

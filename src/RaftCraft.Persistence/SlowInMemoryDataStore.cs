@@ -28,14 +28,11 @@ namespace RaftCraft.Persistence
             }
         }
 
-        public void UpdateCurrentTerm(int newTerm)
+        public void Update(int newTerm, int? votedFor)
         {
+            // TODO Real version must be transactional.
             _currentTerm = newTerm;
-        }
-
-        public void UpdateVotedFor(int? candidateId)
-        {
-            _votedFor = candidateId;
+            _votedFor = votedFor;
         }
     }
 }
