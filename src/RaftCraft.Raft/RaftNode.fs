@@ -48,10 +48,8 @@ type RaftNode
     let transitionToFollowerState() =
         Console.WriteLine("Transitioning to follower")
 
-        async {
-            do! nodeState.Update <| NodeState(RaftRole.Candidate, nodeState.Current().Term + 1, None)
-            electionTimer.Start(fun _ -> agent.Post(DomainEvent.ElectionTimerFired))
-        }
+        nodeState.Update <| NodeState(RaftRole.Candidate, nodeState.Current().Term + 1, None)
+        electionTimer.Start(fun _ -> agent.Post(DomainEvent.ElectionTimerFired))
 
     let transitionToCandidateState() =
         Console.WriteLine("Transitioning to candidate");

@@ -22,11 +22,11 @@ type PeerDiplomat(peer : IRaftPeer, retryIntervalMs : int, timer : GlobalTimerHo
             | AppendEntriesRequest _ | VoteRequest _ -> retryPipeline.Add(message, timer.CurrentTick)
             | _ -> ()
     
-    let checkExpiriesAsync (tick : TimerTick) =
+    let checkExpiries (tick : TimerTick) =
             retryPipeline.Expiry (tick) (fun msg -> peer.Post(msg))
 
     // TODO Consider whether it is best to check for expiry every clock tick? It's good in some ways but bad in others.
-    let subscription = timer.Observable().Subscribe(checkExpiriesAsync)
+    let subscription = timer.Observable().Subscribe(checkExpiries)
 
     member __.Post(message : RaftMessage) =
         track message
