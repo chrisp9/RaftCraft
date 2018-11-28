@@ -6,16 +6,16 @@ open System.Collections.Generic
 open System
 open RaftCraft.RaftDomain
 
-let (|AppendEntriesRequest|_|) (request: RequestMessage) =
+let (|AppendEntriesRequest|_|) (request: RaftMessage) =
     !?request.AppendEntriesRequest
     
-let (|AppendEntriesResponse|_|) (request: RequestMessage) =
+let (|AppendEntriesResponse|_|) (request: RaftMessage) =
     !?request.AppendEntriesResponse
 
-let (|VoteRequest|_|) (request: RequestMessage) =
+let (|VoteRequest|_|) (request: RaftMessage) =
     !?request.VoteRequest
     
-let (|VoteResponse|_|) (request: RequestMessage) =
+let (|VoteResponse|_|) (request: RaftMessage) =
     !?request.VoteResponse
 
 
@@ -33,7 +33,7 @@ type HashSetPool<'a>() =
 
 // Holds entries for a fixed amount of time.
 type Pipeline(retryIntervalMs : int) =
-    let requestsById = Dictionary<Guid, RequestMessage>()
+    let requestsById = Dictionary<Guid, RaftMessage>()
     let requestsByTick = SortedDictionary<int64, HashSet<Guid>>()
 
     // We expect that the amortised number of ExpiryTicks will be O(1), so we benefit from pooling. We only expect 
@@ -60,7 +60,7 @@ type Pipeline(retryIntervalMs : int) =
     // Enforcing only one in-flight message per peer would be too slow.
 
     // For now though, we just retry indefinitely.
-    member __.Add(message : RequestMessage, currentTick : TimerTick) =
+    member __.Add(message : RaftMessage, currentTick : TimerTick) =
 
         let expiryTick = currentTick.CurrentTick + ((int64 retryIntervalMs) / (int64 (currentTick.Granularity)))
 

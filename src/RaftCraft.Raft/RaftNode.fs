@@ -36,7 +36,7 @@ type RaftNode
         messageLoop()
     )
 
-    let onMessage (request : RequestMessage) =
+    let onMessage (request : RaftMessage) =
         printfn "Received %s" (request.ToString())
 
         match request with

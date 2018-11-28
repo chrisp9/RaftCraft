@@ -11,7 +11,7 @@ type RetryCount = int
 type ExpiryTick = int64
 
 type DiplomatAction =
-    | Post of RequestMessage
+    | Post of RaftMessage
     | CheckExpiry of TimerTick
 
 // A diplomat is responsible for negotiating with a particular Peer. How negotation proceeds depends on
@@ -44,7 +44,7 @@ type PeerDiplomat(peer : IRaftPeer, retryIntervalMs : int, timer : GlobalTimerHo
     // TODO Consider whether it is best to check for expiry every clock tick? It's good in some ways but bad in others.
     let subscription = timer.Observable().Subscribe(fun tick -> agent.Post(DiplomatAction.CheckExpiry(tick)))
 
-    member __.Post(message : RequestMessage) =
+    member __.Post(message : RaftMessage) =
         agent.Post(DiplomatAction.Post(message))
 
     member __.Start() =
@@ -69,7 +69,7 @@ type PeerSupervisor(configuration : RaftConfiguration, nodeState : NodeStateHold
         |> Seq.iter(fun client -> client.Value.Post (create client.Key))
 
     let newVoteRequest key =
-        RequestMessage.NewVoteRequest(
+        RaftMessage.NewVoteRequest(
             configuration.Self.NodeId,
             Guid.NewGuid(),
             new VoteRequest(nodeState.Current().Term, key, 1, 1))

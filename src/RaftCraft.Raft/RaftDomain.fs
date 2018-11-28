@@ -22,7 +22,7 @@ type NodeStateHolder(initialState : NodeState) =
     member __.Current() = nodeState
 
 type DomainEvent =
-    | Request of RequestMessage
+    | Request of RaftMessage
     | ElectionTimerFired
 
 [<Struct>]
