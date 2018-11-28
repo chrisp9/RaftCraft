@@ -39,7 +39,6 @@ type PeerDiplomat(peer : IRaftPeer, retryIntervalMs : int, timer : GlobalTimerHo
     member __.Stop() =
         subscription.Dispose()
     
-
 // PeerSupervisor acts as a router layer in deciding which Peer(s) need to be contacted for a given request.
 // It exposes an Observable to let the host Node know when consensus has been reached.
 // Each new Term, it's temporary state needs to be reset.

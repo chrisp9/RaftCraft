@@ -2,14 +2,15 @@
 {
     public class PersistentLogEntry
     {
-        int Term { get; }
-        byte[] Data { get; }
+        public int Index { get; }
+        public int Term { get; }
+        public byte[] Data { get; }
 
-        public PersistentLogEntry(int term, byte[] data)
+        public PersistentLogEntry(int index, int term, byte[] data)
         {
             Term = term;
             Data = data;
+            Index = index;
         }
     }
-
 }
