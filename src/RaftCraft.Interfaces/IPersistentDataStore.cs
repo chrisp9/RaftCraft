@@ -7,5 +7,8 @@ namespace RaftCraft.Interfaces
         void Apply(LogEntry[] logEntries);
         void UpdateCurrentTerm(int newTerm);
         void UpdateVotedFor(int? candidateId);
+
+        int LastLogIndex { get; }
+        int LastLogTerm { get; }
     }
 }

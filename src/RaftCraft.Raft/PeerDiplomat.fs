@@ -56,7 +56,7 @@ type PeerSupervisor(configuration : RaftConfiguration, nodeState : NodeStateHold
         RaftMessage.NewVoteRequest(
             configuration.Self.NodeId,
             Guid.NewGuid(),
-            new VoteRequest(nodeState.Current().Term, key, 1, 1))
+            new VoteRequest(nodeState.Current().Term, key, nodeState.LastLogIndex, nodeState.LastLogTerm))
 
     member __.VoteRequest() = 
         newVoteRequest |> broadcastToAll

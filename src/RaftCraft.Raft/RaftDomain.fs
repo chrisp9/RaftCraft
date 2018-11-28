@@ -27,6 +27,9 @@ type NodeStateHolder(initialState : NodeState, dataStore : IPersistentDataStore)
 
     member __.Current() = nodeState
 
+    member __.LastLogIndex = dataStore.LastLogIndex
+    member __.LastLogTerm = dataStore.LastLogTerm
+
 type DomainEvent =
     | Request of RaftMessage
     | ElectionTimerFired
