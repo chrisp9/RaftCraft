@@ -29,22 +29,17 @@ namespace RaftCraft.Transport
             return new TransientWebSocketClient(uri + "/raft");
         }
 
-        private System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
-
         public async Task PostResponse(RaftMessage message)
         {
             byte[] result;
 
             lock (this)
             {
-                sw.Start();
-
                 using (var stream = new MemoryStream())
                 {
                     Serializer.Serialize(stream, message);
                     result = stream.ToArray();
                 }
-                sw.Stop();
             }
 
             await SendMessageAsync(result);

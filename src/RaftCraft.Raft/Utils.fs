@@ -63,18 +63,16 @@ type Pipeline(retryIntervalMs : int) =
 
     // For now though, we just retry indefinitely.
 
-    let stopwatch = System.Diagnostics.Stopwatch()
-    let sw2 = System.Diagnostics.Stopwatch()
 
-    let fst() = (requestsByTick |> Seq.head).Key
-
+    // TODO Race. What happens if currentTick is in the past? The caller is not in lockstep with the expiry function.
+    // 
     member __.Add(message : RaftMessage, currentTick : TimerTick) =
 
-        let expiryTick = currentTick.CurrentTick + ((int64 retryIntervalMs) / (int64 (currentTick.Granularity)))
+        // We schedule for the next tick after the calculated expiry tick, because in rare edge cases with frequent retry interval,
+        // the expiry tick might be for the current clock tick quantum.
+        let expiryTick = currentTick.CurrentTick + ((int64 retryIntervalMs) / (int64 (currentTick.Granularity))) + int64 1
 
-        stopwatch.Start()
         lock token (fun() ->
-            stopwatch.Stop()
             let expiriesForThisTick = getOrAdd(requestsByTick, expiryTick, fun() -> pool.Borrow())
 
             expiriesForThisTick.Add(message.RequestId) |> ignore
@@ -82,21 +80,22 @@ type Pipeline(retryIntervalMs : int) =
             requestsById.[message.RequestId] <- message)
            
     member __.Expiry (currentTick : TimerTick) (post) =
-        if requestsByTick.Count > 0 then
-            let first = fst()
-            if first = currentTick.CurrentTick then
-                lock token (fun() ->
-                    let localsw2 = sw2
-                    let success, requests = requestsByTick.TryGetValue(currentTick.CurrentTick)
-                    if success then
-                        requestsByTick.Remove(currentTick.CurrentTick) |> ignore
-                        let expiryTick = currentTick.CurrentTick + ((int64 retryIntervalMs) / (int64 (currentTick.Granularity)))
+        lock token (fun() ->
+            let success, requests = requestsByTick.TryGetValue(currentTick.CurrentTick)
+
+            if success then
+                requestsByTick.Remove(currentTick.CurrentTick) |> ignore
+                let expiryTick = currentTick.CurrentTick + ((int64 retryIntervalMs) / (int64 (currentTick.Granularity)))
+                
+                let hasValue, existingRequests = requestsByTick.TryGetValue expiryTick
+                if hasValue then
+                    System.Console.WriteLine("")
+                    for request in requests do
+                        existingRequests.Add(request) |> ignore
+                    else
                         requestsByTick.[expiryTick] <- requests
 
-                        for request in requests do
-                            let success, messageForRequest = requestsById.TryGetValue(request)
-                            localsw2.Start()
+                for request in requests do
+                    let success, messageForRequest = requestsById.TryGetValue(request)
 
-                            if success then post messageForRequest
-                    localsw2.Stop())
-
+                    if success then post messageForRequest)
