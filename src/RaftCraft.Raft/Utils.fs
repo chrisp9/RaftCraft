@@ -65,7 +65,7 @@ type Pipeline(retryIntervalMs : int) =
 
 
     // TODO Race. What happens if currentTick is in the past? The caller is not in lockstep with the expiry function.
-    // 
+    // Might be better to use F# agent in the PeerSupervisor and each PeerDiplomat.
     member __.Add(message : RaftMessage, currentTick : TimerTick) =
 
         // We schedule for the next tick after the calculated expiry tick, because in rare edge cases with frequent retry interval,
@@ -89,7 +89,6 @@ type Pipeline(retryIntervalMs : int) =
                 
                 let hasValue, existingRequests = requestsByTick.TryGetValue expiryTick
                 if hasValue then
-                    System.Console.WriteLine("")
                     for request in requests do
                         existingRequests.Add(request) |> ignore
                     else

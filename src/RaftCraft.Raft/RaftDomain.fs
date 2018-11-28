@@ -1,6 +1,9 @@
 ﻿namespace RaftCraft.RaftDomain
 
 open RaftCraft.Domain
+open RaftCraft.Interfaces
+open System.Threading.Tasks
+open System
 
 type RaftRole =
     | Follower
@@ -12,12 +15,15 @@ type NodeState(raftRole, term : int, votedFor) =
     member __.Term = term
     member __.VotedFor : Option<int> = votedFor
 
-
-type NodeStateHolder(initialState : NodeState) =
+type NodeStateHolder(initialState : NodeState, dataStore : IPersistentDataStore) =
     let mutable nodeState : NodeState = initialState
 
     member __.Update(newState : NodeState) =
         nodeState <- newState
+
+        // TODO: Should this be transactional? I think it needs to be otherwise we get very unlikely races on node restart.
+        dataStore.UpdateCurrentTerm newState.Term
+        dataStore.UpdateVotedFor (newState.VotedFor |> Option.toNullable)
 
     member __.Current() = nodeState
 

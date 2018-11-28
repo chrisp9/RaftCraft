@@ -40,22 +40,25 @@ type RaftNode
         printfn "Received %s" (request.ToString())
 
         match request with
+            | VoteRequest r           -> handleVoteRequest
             | VoteResponse r          -> handleVoteResponse request.SourceNodeId r
             | _                       -> invalidOp("Unknown message") |> raise // TODO deal with this better
+        ()
     
     let transitionToFollowerState() =
         Console.WriteLine("Transitioning to follower")
-        nodeState.Update <| NodeState(RaftRole.Candidate, nodeState.Current().Term + 1, None)
-        electionTimer.Start(fun _ -> agent.Post(DomainEvent.ElectionTimerFired))
+
+        async {
+            do! nodeState.Update <| NodeState(RaftRole.Candidate, nodeState.Current().Term + 1, None)
+            electionTimer.Start(fun _ -> agent.Post(DomainEvent.ElectionTimerFired))
+        }
 
     let transitionToCandidateState() =
         Console.WriteLine("Transitioning to candidate");
 
-        // TODO More election management.
         nodeState.Update <| NodeState(RaftRole.Candidate, nodeState.Current().Term + 1, Some configuration.Self.NodeId)
         electionTimer.Start(fun _ -> agent.Post(DomainEvent.ElectionTimerFired))
         peerSupervisor.VoteRequest()
-        ()
 
     let electionTimerFired() =
         match nodeState.Current().RaftRole with
