@@ -6,11 +6,13 @@ open RaftCraft.Interfaces
 open RaftTimer
 open RaftCraft
 open RaftCraft.Raft
+open RaftCraft.RaftDomain
 
 type RaftSystem() = 
     static member Create
         (serverFactory : Func<RaftHost, IRaftHost>, 
          clientFactory : Func<RaftPeer, IRaftPeer>, 
+         persistentDataStore : IPersistentDataStore,
          configuration : RaftConfiguration) =
     
         // TODO Make the hardcoded values here configurable.
@@ -26,8 +28,9 @@ type RaftSystem() =
         let translatedClientFactory = clientFactory.Invoke
 
         let peerSupervisorFactory = fun v -> new PeerSupervisor(configuration, v, fun v -> new PeerDiplomat(translatedClientFactory(v), 200, timerHolder))
+        let nodeStateHolderFactory = fun v -> new NodeStateHolder(v, persistentDataStore)
 
-        let raftNode =  RaftNode(translatedServerFactory, configuration, electionTimerHolder, peerSupervisorFactory)
+        let raftNode =  RaftNode(translatedServerFactory, configuration, electionTimerHolder, peerSupervisorFactory, nodeStateHolderFactory)
         timerHolder.Start()
 
         raftNode

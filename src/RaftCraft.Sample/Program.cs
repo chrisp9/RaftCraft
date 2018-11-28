@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using RaftCraft.Domain;
+using RaftCraft.Persistence;
 using RaftCraft.Raft;
 using RaftCraft.Transport;
 using System;
@@ -26,7 +27,8 @@ namespace RaftCraft.Sample
 
             var node = RaftSystem.RaftSystem.Create(
                 host => new RaftServer(host.Address),
-                peer => new PersistentWebSocketClient(peer, socketFactory), 
+                peer => new PersistentWebSocketClient(peer, socketFactory),
+                new SlowInMemoryDataStore(),
                 converted);
 
             node.Start();
