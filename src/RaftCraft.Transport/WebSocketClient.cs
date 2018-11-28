@@ -29,17 +29,26 @@ namespace RaftCraft.Transport
             return new TransientWebSocketClient(uri + "/raft");
         }
 
+        private System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
+
         public async Task PostResponse(RaftMessage message)
         {
             byte[] result;
 
-            using(var stream = new MemoryStream())
+            lock (this)
             {
-                Serializer.Serialize(stream, message);
-                result = stream.ToArray();
+                sw.Start();
+
+                using (var stream = new MemoryStream())
+                {
+                    Serializer.Serialize(stream, message);
+                    result = stream.ToArray();
+                }
+                sw.Stop();
             }
 
             await SendMessageAsync(result);
+
         }
 
         public void Start()
@@ -81,9 +90,9 @@ namespace RaftCraft.Transport
 
         private async Task SendMessageAsync(byte[] message)
         {
-            if (_ws.State != WebSocketState.Open)
+            if (_ws == null || _ws.State != WebSocketState.Open)
             {
-                throw new Exception("Connection is not open.");
+                return;
             }
 
             var messagesCount = (int)Math.Ceiling((double)message.Length / SendChunkSize);
@@ -98,7 +107,6 @@ namespace RaftCraft.Transport
                 {
                     count = message.Length - offset;
                 }
-
                 await _ws.SendAsync(new ArraySegment<byte>(message, offset, count), WebSocketMessageType.Text, lastMessage, _cancellationToken);
             }
         }

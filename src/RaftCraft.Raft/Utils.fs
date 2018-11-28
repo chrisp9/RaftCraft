@@ -5,7 +5,6 @@ open Operators
 open System.Collections.Generic
 open System
 open RaftCraft.RaftDomain
-open System.ServiceModel.Channels
 
 let (|AppendEntriesRequest|_|) (request: RaftMessage) =
     !?request.AppendEntriesRequest
@@ -35,7 +34,7 @@ type HashSetPool<'a>() =
 // Holds entries for a fixed amount of time.
 type Pipeline(retryIntervalMs : int) =
     let requestsById = Dictionary<Guid, RaftMessage>()
-    let requestsByTick = Dictionary<int64, HashSet<Guid>>()
+    let requestsByTick = SortedDictionary<int64, HashSet<Guid>>()
 
     let token = Object()
 
@@ -65,13 +64,13 @@ type Pipeline(retryIntervalMs : int) =
     // For now though, we just retry indefinitely.
 
     let stopwatch = System.Diagnostics.Stopwatch()
+    let sw2 = System.Diagnostics.Stopwatch()
+
+    let fst() = (requestsByTick |> Seq.head).Key
 
     member __.Add(message : RaftMessage, currentTick : TimerTick) =
 
         let expiryTick = currentTick.CurrentTick + ((int64 retryIntervalMs) / (int64 (currentTick.Granularity)))
-
-        // Using lock here because it makes the rest of the code far simpler. I tried the alternative approach but decided
-        // the othher approach (using agents) was more complex and probably less efficient than just using a lock here.
 
         stopwatch.Start()
         lock token (fun() ->
@@ -81,17 +80,23 @@ type Pipeline(retryIntervalMs : int) =
             expiriesForThisTick.Add(message.RequestId) |> ignore
 
             requestsById.[message.RequestId] <- message)
-    
+           
     member __.Expiry (currentTick : TimerTick) (post) =
-        lock token (fun() -> 
-            let success, requests = requestsByTick.TryGetValue(currentTick.CurrentTick)
-            if success then
-                requestsByTick.Remove(currentTick.CurrentTick) |> ignore
-                let expiryTick = currentTick.CurrentTick + ((int64 retryIntervalMs) / (int64 (currentTick.Granularity)))
-                requestsByTick.[expiryTick] <- requests
-                
-                for request in requests do
-                    let success, messageForRequest = requestsById.TryGetValue(request)
-                    if success then post messageForRequest)
+        if requestsByTick.Count > 0 then
+            let first = fst()
+            if first = currentTick.CurrentTick then
+                lock token (fun() ->
+                    let localsw2 = sw2
+                    let success, requests = requestsByTick.TryGetValue(currentTick.CurrentTick)
+                    if success then
+                        requestsByTick.Remove(currentTick.CurrentTick) |> ignore
+                        let expiryTick = currentTick.CurrentTick + ((int64 retryIntervalMs) / (int64 (currentTick.Granularity)))
+                        requestsByTick.[expiryTick] <- requests
 
+                        for request in requests do
+                            let success, messageForRequest = requestsById.TryGetValue(request)
+                            localsw2.Start()
+
+                            if success then post messageForRequest
+                    localsw2.Stop())
 
