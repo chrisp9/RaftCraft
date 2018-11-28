@@ -62,22 +62,28 @@ type Pipeline(retryIntervalMs : int) =
     // Enforcing only one in-flight message per peer would be too slow.
 
     // For now though, we just retry indefinitely.
+
     member __.Add(message : RaftMessage, currentTick : TimerTick) =
 
         let expiryTick = currentTick.CurrentTick + ((int64 retryIntervalMs) / (int64 (currentTick.Granularity)))
 
         // Using lock here because it makes the rest of the code far simpler. I tried the alternative approach but decided
         // the othher approach (using agents) was more complex and probably less efficient than just using a lock here.
-        lock token, fun() ->
+        lock token (fun() ->
             let expiriesForThisTick = getOrAdd(requestsByTick, expiryTick, fun() -> pool.Borrow())
 
             expiriesForThisTick.Add(message.RequestId) |> ignore
 
-            requestsById.[message.RequestId] <- message
+            requestsById.[message.RequestId] <- message)
     
     member __.Expiry(currentTick : TimerTick) =
-        let success, requestsByTick = requestsByTick.TryGetValue(currentTick.CurrentTick)
+        lock token (fun() -> 
+            let success, requests = requestsByTick.TryGetValue(currentTick.CurrentTick)
+            if success then
+                let expiryTick = currentTick.CurrentTick + ((int64 retryIntervalMs) / (int64 (currentTick.Granularity)))
+                requestsByTick.[expiryTick] <- requests
+                Some requests
+            else
+                None)
 
-        if success then
-            let itemsAtTick = 
-        
+

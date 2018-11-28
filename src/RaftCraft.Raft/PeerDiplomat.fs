@@ -10,9 +10,6 @@ open RaftTimer
 type RetryCount = int
 type ExpiryTick = int64
 
-type DiplomatAction =
-    | Post of RaftMessage
-    | CheckExpiry of TimerTick
 
 // A diplomat is responsible for negotiating with a particular Peer. How negotation proceeds depends on
 // the political landscape. For example, if a peer does not respond to certain requests within a
@@ -24,28 +21,23 @@ type PeerDiplomat(peer : IRaftPeer, retryIntervalMs : int, timer : GlobalTimerHo
         match message with
             | AppendEntriesRequest _ | VoteRequest _ -> retryPipeline.Add(message, timer.CurrentTick)
             | _ -> ()
-
-    let agent = MailboxProcessor.Start(fun inbox ->
-        let rec messageLoop() = async {
-            let! msg = inbox.Receive()
-
-            match msg with
-                | Post request -> 
-                    track request
-                    peer.Post request
-                | CheckExpiry tick -> ()
-                    
-            return! messageLoop()
-        }
-
-        messageLoop()
-    )
+    
+    let checkExpiriesAsync (tick : TimerTick) =
+        async {
+            let maybeExpiries = retryPipeline.Expiry(tick)
+            match maybeExpiries with
+            // TODO not threadsafe
+                | Some expiries -> expiries |> Seq.iter(fun exp -> peer.Post(exp))
+                | None -> ()
+        } |> Async.StartAsTask |> ignore
 
     // TODO Consider whether it is best to check for expiry every clock tick? It's good in some ways but bad in others.
-    let subscription = timer.Observable().Subscribe(fun tick -> agent.Post(DiplomatAction.CheckExpiry(tick)))
+    let subscription = timer.Observable().Subscribe(checkExpiriesAsync)
 
     member __.Post(message : RaftMessage) =
-        agent.Post(DiplomatAction.Post(message))
+        track message
+        peer.Post message
+
 
     member __.Start() =
        peer.Start()

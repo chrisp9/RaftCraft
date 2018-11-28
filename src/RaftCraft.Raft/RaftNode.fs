@@ -40,9 +40,9 @@ type RaftNode
         printfn "Received %s" (request.ToString())
 
         match request with
-            | AppendEntriesRequest r  -> handleAppendEntriesRequest request.NodeId r
-            | AppendEntriesResponse r -> handleAppendEntriesResponse request.NodeId r
-            | VoteRequest r           -> handleVoteRequest request.NodeId r
+            | AppendEntriesRequest r  -> handleAppendEntriesRequest request.SourceNodeId r
+            | AppendEntriesResponse r -> handleAppendEntriesResponse request.SourceNodeId r
+            | VoteRequest r           -> handleVoteRequest request.SourceNodeId r
             | _                       -> invalidOp("Unknown message") |> raise // TODO deal with this better
     
     let transitionToFollowerState() =
