@@ -4,7 +4,7 @@ namespace RaftCraft.Interfaces
 {
     public interface IRaftPeer
     {
-        void Post(RequestMessage message);
+        void Post(RaftMessage message);
         void Start();
     }
 }

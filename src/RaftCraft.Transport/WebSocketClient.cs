@@ -29,7 +29,7 @@ namespace RaftCraft.Transport
             return new TransientWebSocketClient(uri + "/raft");
         }
 
-        public async Task PostResponse(RequestMessage message)
+        public async Task PostResponse(RaftMessage message)
         {
             byte[] result;
 

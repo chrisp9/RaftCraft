@@ -27,7 +27,6 @@ type HashSetPool<'a>() =
             hashSets.Enqueue(new HashSet<'a>())
         hashSets.Dequeue()
         
-
     member __.Return(set : HashSet<'a>) =
         set.Clear()
         hashSets.Enqueue(set)
@@ -57,7 +56,6 @@ type Pipeline(retryIntervalMs : int) =
     // Importantly, the Raft algorithm makes no assumptions about the underlying protocol or message ordering.
     // This implementation doesn't even guarantee message ordering. Incoming messages are optimistically sent to peers, but we
     // may have many prior messages in the retry collection. We have to be optimistic - assume the delayed messages will
-    
     // eventually received by the peer, and let the algorithm handle any state inconsistences as a result of message reordering.
     // Enforcing only one in-flight message per peer would be too slow.
 
@@ -71,3 +69,10 @@ type Pipeline(retryIntervalMs : int) =
         expiriesForThisTick.Add(message.RequestId) |> ignore
 
         requestsById.[message.RequestId] <- message
+    
+    member __.Expiry(currentTick : TimerTick) =
+        let success, requestsByTick = requestsByTick.TryGetValue(currentTick.CurrentTick)
+
+        if success then
+            let itemsAtTick = 
+        

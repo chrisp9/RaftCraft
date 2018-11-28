@@ -20,7 +20,7 @@ namespace RaftCraft.Transport
             _clientFactory = clientFactory;
         }
 
-        public void Post(RequestMessage message)
+        public void Post(RaftMessage message)
         {
             // TODO handle exceptions properly.
 

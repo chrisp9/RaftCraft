@@ -41,13 +41,19 @@ type PeerDiplomat(peer : IRaftPeer, retryIntervalMs : int, timer : GlobalTimerHo
         messageLoop()
     )
 
+    // TODO Consider whether it is best to check for expiry every clock tick? It's good in some ways but bad in others.
     let subscription = timer.Observable().Subscribe(fun tick -> agent.Post(DiplomatAction.CheckExpiry(tick)))
 
     member __.Post(message : RequestMessage) =
         agent.Post(DiplomatAction.Post(message))
 
-     member __.Start() =
-        peer.Start()
+    member __.Start() =
+       peer.Start()
+    
+    // TODO call me
+    member __.Stop() =
+        subscription.Dispose()
+    
 
 // PeerSupervisor acts as a router layer in deciding which Peer(s) need to be contacted for a given request.
 // It exposes an Observable to let the host Node know when consensus has been reached.

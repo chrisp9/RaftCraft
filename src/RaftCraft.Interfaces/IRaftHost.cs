@@ -5,6 +5,6 @@ namespace RaftCraft.Interfaces
 {
     public interface IRaftHost
     {
-        void Start(Action<RequestMessage> onMessage);
+        void Start(Action<RaftMessage> onMessage);
     }
 }

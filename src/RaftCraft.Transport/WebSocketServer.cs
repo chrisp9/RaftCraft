@@ -10,9 +10,9 @@ namespace RaftCraft.Transport
 {
     public class Behavior : WebSocketBehavior
     {
-        private Action<RequestMessage> _onMessage;
+        private Action<RaftMessage> _onMessage;
 
-        public Behavior(Action<RequestMessage> onMessage)
+        public Behavior(Action<RaftMessage> onMessage)
         {
             _onMessage = onMessage;
         }
@@ -21,10 +21,10 @@ namespace RaftCraft.Transport
         {
             // TODO pool streams?
             // TODO pool streams?
-            RequestMessage result;
+            RaftMessage result;
             using (var memoryStream = new MemoryStream(e.RawData))
             {
-                result = Serializer.Deserialize<RequestMessage>(memoryStream);
+                result = Serializer.Deserialize<RaftMessage>(memoryStream);
             }
 
             _onMessage?.Invoke(result);
@@ -42,9 +42,9 @@ namespace RaftCraft.Transport
             _webSocketServer = new WebSocketServer(_address);
         }
 
-        private Action<RequestMessage> _onMessage;
+        private Action<RaftMessage> _onMessage;
 
-        public void Start(Action<RequestMessage> onMessage)
+        public void Start(Action<RaftMessage> onMessage)
         {
             _webSocketServer.Start();
 

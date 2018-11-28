@@ -5,7 +5,7 @@ namespace RaftCraft.Domain
 {
     [ProtoContract]
     [Serializable]
-    public class RequestMessage
+    public class RaftMessage
     {
         [ProtoMember(1)]
         public int NodeId { get; set; }
@@ -25,7 +25,7 @@ namespace RaftCraft.Domain
         [ProtoMember(6)]
         public VoteResponse VoteResponse { get; set; }
 
-        private RequestMessage(
+        private RaftMessage(
             int nodeId,
             Guid requestId,
             AppendEntriesRequest appendEntriesRequest,
@@ -45,7 +45,7 @@ namespace RaftCraft.Domain
 
         public override string ToString()
         {
-            return $"{nameof(RequestMessage)}: " +
+            return $"{nameof(RaftMessage)}: " +
                 $"{nameof(NodeId)}: {NodeId}, " +
                 $"{nameof(RequestId)}: {RequestId}, " +
                 $"{nameof(AppendEntriesRequest)}: {AppendEntriesRequest}, " +
@@ -54,38 +54,38 @@ namespace RaftCraft.Domain
                 $"{nameof(VoteResponse)}: {VoteResponse}";
         }
 
-        public RequestMessage() { }
+        public RaftMessage() { }
 
-        public static RequestMessage NewAppendEntiresRequest(
+        public static RaftMessage NewAppendEntiresRequest(
             int nodeId,
             Guid requestId, 
             AppendEntriesRequest appendEntries)
         {
-            return new RequestMessage(nodeId, requestId, appendEntries, null, null, null);
+            return new RaftMessage(nodeId, requestId, appendEntries, null, null, null);
         }
 
-        public static RequestMessage NewAppendEntriesResponse(
+        public static RaftMessage NewAppendEntriesResponse(
             int nodeId,
             Guid requestId,
             AppendEntriesResponse appendEntriesResponse)
         {
-            return new RequestMessage(nodeId, requestId, null, appendEntriesResponse, null, null);
+            return new RaftMessage(nodeId, requestId, null, appendEntriesResponse, null, null);
         }
 
-        public static RequestMessage NewVoteRequest(
+        public static RaftMessage NewVoteRequest(
             int nodeId,
             Guid requestId, 
             VoteRequest voteRequest)
         {
-            return new RequestMessage(nodeId, requestId, null, null, voteRequest, null);
+            return new RaftMessage(nodeId, requestId, null, null, voteRequest, null);
         }
 
-        public static RequestMessage NewVoteResponse(
+        public static RaftMessage NewVoteResponse(
             int nodeId,
             Guid requestId,
             VoteResponse voteResponse)
         {
-            return new RequestMessage(nodeId, requestId, null, null, null, voteResponse);
+            return new RaftMessage(nodeId, requestId, null, null, null, voteResponse);
         }
     }
 
