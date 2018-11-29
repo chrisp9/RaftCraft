@@ -69,13 +69,12 @@ type PeerSupervisor(configuration : RaftConfiguration, nodeState : NodeStateHold
         newVoteRequest |> broadcastToAll
 
     member __.VoteRequest(request : RaftMessage) =
-        let peerForRequest = request.SourceNodeId
-        clients.[peerForRequest].Post(request)
+        newVoteResponse(request)
 
     member __.VoteResponse(response : RaftMessage) =
-        let peerForResponse = response.SourceNodeId
+        //clients.[response.SourceNodeId].Post(response)
+        Console.WriteLine("")
+        ()
 
-        clients.[peerForResponse].Post(response)
-    
     member __.Start() =
         clients |> Seq.iter(fun client -> client.Value.Start())

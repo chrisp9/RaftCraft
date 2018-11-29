@@ -65,7 +65,14 @@ type Pipeline(retryIntervalMs : int) =
 
     member __.Remove(messageId) =  
         lock token (fun() ->
-            requestsById.Remove(messageId)
+            let result = requestsById.Remove(messageId)
+
+            if result then
+                Console.WriteLine("A")
+            else
+                Console.WriteLine("B")
+
+            result
         )
 
     // TODO Race. What happens if currentTick is in the past? The caller is not in lockstep with the expiry function.

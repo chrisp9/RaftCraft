@@ -19,7 +19,7 @@ type RaftNode
     let peerSupervisor = peerSupervisor nodeState
 
     let handleAppendEntriesRequest id appendEntriesRequest = ()
-    let handleVoteRequest id voteRequest = printfn "VoteRequest Received"
+    let handleVoteRequest id voteRequest = peerSupervisor.VoteRequest voteRequest
     let handleAppendEntriesResponse id appendEntriesResponse = ()
     let handleVoteResponse id voteResponse = peerSupervisor.VoteResponse voteResponse
 
@@ -44,7 +44,7 @@ type RaftNode
         printfn "Received %s" (msg.ToString())
 
         match msg with
-            | VoteRequest r           -> handleVoteRequest r.CandidateId r
+            | VoteRequest r           -> handleVoteRequest r.CandidateId msg
             | VoteResponse r          -> peerSupervisor.VoteResponse msg
             | _                       -> invalidOp("Unknown message") |> raise // TODO deal with this better
         ()
@@ -77,6 +77,7 @@ type RaftNode
     member __.Server = server
 
     member this.Start() =
+        System.Diagnostics.Debugger.Launch()
         // Important to transition to follower before starting the server to avoid race conditions.
         transitionToFollowerState()
         server.Start (fun msg -> agent.Post(DomainEvent.Request(msg)))

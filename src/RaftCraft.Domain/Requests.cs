@@ -45,13 +45,20 @@ namespace RaftCraft.Domain
 
         public override string ToString()
         {
-            return $"{nameof(RaftMessage)}: " +
+            var str = $"{nameof(RaftMessage)}: " +
                 $"{nameof(SourceNodeId)}: {SourceNodeId}, " +
-                $"{nameof(RequestId)}: {RequestId}, " +
-                $"{nameof(AppendEntriesRequest)}: {AppendEntriesRequest}, " +
-                $"{nameof(AppendEntriesResponse)}: {AppendEntriesResponse}, " +
-                $"{nameof(VoteRequest)}: {VoteRequest}, " +
-                $"{nameof(VoteResponse)}: {VoteResponse}";
+                $"{nameof(RequestId)}: {RequestId}, ";
+
+            if (AppendEntriesRequest != null)
+                str = str + $"{nameof(AppendEntriesRequest)}: {AppendEntriesRequest}, ";
+            if (AppendEntriesResponse != null)
+                str = str + $"{nameof(AppendEntriesResponse)}: {AppendEntriesResponse}, ";
+            if (VoteRequest != null)
+                str = str + $"{nameof(VoteRequest)}: {VoteRequest}, ";
+            if(VoteResponse != null)
+                str = str + $"{nameof(VoteResponse)}: {VoteResponse}";
+
+            return str;
         }
 
         public RaftMessage() { }
@@ -201,6 +208,8 @@ namespace RaftCraft.Domain
             Term = term;
             VoteGranted = voteGranted;
         }
+
+        public VoteResponse() { }
 
         public override string ToString()
         {
