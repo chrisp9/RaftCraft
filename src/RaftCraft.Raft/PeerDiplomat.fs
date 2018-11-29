@@ -30,7 +30,10 @@ type PeerDiplomat(peer : IRaftPeer, retryIntervalMs : int, timer : GlobalTimerHo
 
     member __.Post(message : RaftMessage) =
         track message
-        peer.Post message
+
+        match message with
+            | AppendEntriesRequest _ | VoteRequest _ -> peer.Post message
+            | VoteResponse _ -> peer.Post message
 
     member __.Start() =
        peer.Start()
@@ -58,8 +61,16 @@ type PeerSupervisor(configuration : RaftConfiguration, nodeState : NodeStateHold
             Guid.NewGuid(),
             new VoteRequest(nodeState.Current().Term, key, nodeState.LastLogIndex, nodeState.LastLogTerm))
 
-    member __.VoteRequest() = 
+    let newVoteResponse (request : RaftMessage) =
+        let response = RaftMessage.NewVoteResponse(configuration.Self.NodeId, request.RequestId, new VoteResponse(nodeState.Current().Term, true))
+        clients.[request.SourceNodeId].Post(response)
+
+    member __.RequestVote() = 
         newVoteRequest |> broadcastToAll
+
+    member __.VoteRequest(request : RaftMessage) =
+        let peerForRequest = request.SourceNodeId
+        clients.[peerForRequest].Post(request)
 
     member __.VoteResponse(response : RaftMessage) =
         let peerForResponse = response.SourceNodeId

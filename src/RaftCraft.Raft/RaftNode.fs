@@ -60,7 +60,7 @@ type RaftNode
 
         nodeState.Update <| NodeState(RaftRole.Candidate, nodeState.Current().Term + 1, Some configuration.Self.NodeId)
         electionTimer.Start(fun _ -> agent.Post(DomainEvent.ElectionTimerFired))
-        peerSupervisor.VoteRequest()
+        peerSupervisor.RequestVote()
 
     let electionTimerFired() =
         match nodeState.Current().RaftRole with
