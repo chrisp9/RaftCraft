@@ -13,15 +13,18 @@ type RaftNode
          electionTimer : ElectionTimerHolder,
          peerSupervisor : NodeStateHolder -> PeerSupervisor,
          nodeStateHolderFactory : NodeState -> NodeStateHolder) =
+    
+    let nodeState = NodeState(RaftRole.Follower, 0, Option.None) |> nodeStateHolderFactory
+
+    let peerSupervisor = peerSupervisor nodeState
 
     let handleAppendEntriesRequest id appendEntriesRequest = ()
     let handleVoteRequest id voteRequest = printfn "VoteRequest Received"
     let handleAppendEntriesResponse id appendEntriesResponse = ()
-    let handleVoteResponse id voteResponse = ()
+    let handleVoteResponse id voteResponse = peerSupervisor.VoteResponse voteResponse
 
     // Initially we are a follower at term 0 and we haven't voted for anyone.
-    let nodeState = NodeState(RaftRole.Follower, 0, Option.None) |> nodeStateHolderFactory
-    let peerSupervisor = peerSupervisor nodeState
+
 
     let eventStream = Event<DomainEvent>()
     let server = serverFactory configuration.Self
@@ -37,12 +40,12 @@ type RaftNode
         messageLoop()
     )
 
-    let onMessage (request : RaftMessage) =
-        printfn "Received %s" (request.ToString())
+    let onMessage (msg : RaftMessage) =
+        printfn "Received %s" (msg.ToString())
 
-        match request with
+        match msg with
             | VoteRequest r           -> handleVoteRequest r.CandidateId r
-            | VoteResponse r          -> handleVoteResponse request.SourceNodeId r
+            | VoteResponse r          -> peerSupervisor.VoteResponse msg
             | _                       -> invalidOp("Unknown message") |> raise // TODO deal with this better
         ()
     

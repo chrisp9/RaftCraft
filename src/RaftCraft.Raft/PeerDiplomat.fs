@@ -19,6 +19,7 @@ type PeerDiplomat(peer : IRaftPeer, retryIntervalMs : int, timer : GlobalTimerHo
     let track message =
         match message with
             | AppendEntriesRequest _ | VoteRequest _ -> retryPipeline.Add(message, timer.CurrentTick)
+            | VoteResponse r -> retryPipeline.Remove(message.RequestId) |> ignore
             | _ -> ()
     
     let checkExpiries (tick : TimerTick) =
@@ -60,5 +61,10 @@ type PeerSupervisor(configuration : RaftConfiguration, nodeState : NodeStateHold
     member __.VoteRequest() = 
         newVoteRequest |> broadcastToAll
 
+    member __.VoteResponse(response : RaftMessage) =
+        let peerForResponse = response.SourceNodeId
+
+        clients.[peerForResponse].Post(response)
+    
     member __.Start() =
         clients |> Seq.iter(fun client -> client.Value.Start())

@@ -28,9 +28,9 @@ type ElectionTimer(timer : GlobalTimerHolder, electionTimerTimeout : int64) =
 
     member __.Reset() =
         timerExpiry.Reset(getNextExpiry())
-
     member __.Subscribe f =
         timer.Observable() 
+
             |> Observable.filter(expiryCheck) 
             |> Subscription<Election>.subscribe f (fun() -> timerExpiry.Reset(getNextExpiry()))
 

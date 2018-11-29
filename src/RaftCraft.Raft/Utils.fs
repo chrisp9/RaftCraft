@@ -63,6 +63,10 @@ type Pipeline(retryIntervalMs : int) =
 
     // For now though, we just retry indefinitely.
 
+    member __.Remove(messageId) =  
+        lock token (fun() ->
+            requestsById.Remove(messageId)
+        )
 
     // TODO Race. What happens if currentTick is in the past? The caller is not in lockstep with the expiry function.
     // Might be better to use F# agent in the PeerSupervisor and each PeerDiplomat.
@@ -90,9 +94,17 @@ type Pipeline(retryIntervalMs : int) =
                 let hasValue, existingRequests = requestsByTick.TryGetValue expiryTick
                 if hasValue then
                     for request in requests do
-                        existingRequests.Add(request) |> ignore
+                        if(requestsById.ContainsKey(request)) then
+                            existingRequests.Add(request) |> ignore
                     else
-                        requestsByTick.[expiryTick] <- requests
+                        for request in requests do 
+                            if(not (requestsById.ContainsKey(request))) then
+                                requests.Remove(request) |> ignore
+                        
+                        if(requests.Count = 0) then 
+                            pool.Return(requests)
+                        else
+                            requestsByTick.[expiryTick] <- requests
 
                 for request in requests do
                     let success, messageForRequest = requestsById.TryGetValue(request)
