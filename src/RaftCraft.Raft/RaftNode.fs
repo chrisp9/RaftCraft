@@ -77,7 +77,6 @@ type RaftNode
     member __.Server = server
 
     member this.Start() =
-        System.Diagnostics.Debugger.Launch()
         // Important to transition to follower before starting the server to avoid race conditions.
         transitionToFollowerState()
         server.Start (fun msg -> agent.Post(DomainEvent.Request(msg)))
