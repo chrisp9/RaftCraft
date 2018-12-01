@@ -28,7 +28,7 @@ type PeerDiplomat(peer : IRaftPeer, retryIntervalMs : int, timer : GlobalTimerHo
     // TODO Consider whether it is best to check for expiry every clock tick? It's good in some ways but bad in others.
     let subscription = timer.Observable().Subscribe(checkExpiries)
 
-    member __.Handle(message : RaftMessage) =
+    member __.Notify(message : RaftMessage) =
         track message
 
         match message with
@@ -75,10 +75,8 @@ type PeerSupervisor(configuration : RaftConfiguration, nodeState : NodeStateHold
     member __.VoteRequest(request : RaftMessage) =
         newVoteResponse(request)
 
-    member __.VoteResponse(response : RaftMessage) =
-        clients.[response.SourceNodeId].Handle(response)
-        Console.WriteLine("")
-        ()
+    member __.HandleVoteResponse(response : RaftMessage) =
+        clients.[response.SourceNodeId].Notify(response)
 
     member __.Start() =
         clients |> Seq.iter(fun client -> client.Value.Start())

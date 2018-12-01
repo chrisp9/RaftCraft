@@ -21,7 +21,7 @@ type RaftNode
     let handleAppendEntriesRequest id appendEntriesRequest = ()
     let handleVoteRequest id voteRequest = peerSupervisor.VoteRequest voteRequest
     let handleAppendEntriesResponse id appendEntriesResponse = ()
-    let handleVoteResponse id voteResponse = peerSupervisor.VoteResponse voteResponse
+    let handleVoteResponse id voteResponse = peerSupervisor.HandleVoteResponse voteResponse
 
     // Initially we are a follower at term 0 and we haven't voted for anyone.
 
@@ -45,7 +45,7 @@ type RaftNode
 
         match msg with
             | VoteRequest r           -> handleVoteRequest r.CandidateId msg
-            | VoteResponse r          -> peerSupervisor.VoteResponse msg
+            | VoteResponse r          -> peerSupervisor.HandleVoteResponse msg
             | _                       -> invalidOp("Unknown message") |> raise // TODO deal with this better
         ()
     

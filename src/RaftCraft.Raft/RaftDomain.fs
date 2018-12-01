@@ -2,8 +2,6 @@
 
 open RaftCraft.Domain
 open RaftCraft.Interfaces
-open System.Threading.Tasks
-open System
 
 type RaftRole =
     | Follower
