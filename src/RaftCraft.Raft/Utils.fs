@@ -104,7 +104,7 @@ type Pipeline(retryIntervalMs : int) =
                         if(requestsById.ContainsKey(request)) then
                             existingRequests.Add(request) |> ignore
                     else
-                        for request in requests do 
+                        for request in new HashSet<Guid>(requests) do 
                             if(not (requestsById.ContainsKey(request))) then
                                 requests.Remove(request) |> ignore
                         
