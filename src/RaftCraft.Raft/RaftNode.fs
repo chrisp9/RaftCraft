@@ -44,7 +44,15 @@ type RaftNode
         printfn "Received %s" (msg.ToString())
 
         match msg with
-            | VoteRequest r           -> peerSupervisor.RespondToVoteRequest msg.RequestId msg.SourceNodeId
+            | VoteRequest r           -> 
+                let currentState = nodeState.Current()
+                let isSuccess = 
+                    if (r.Term >= currentState.Term  && r.LastLogIndex >= nodeState.LastLogIndex && r.LastLogTerm >= nodeState.LastLogTerm) 
+                    then true 
+                    else false
+
+                nodeState.Update <| NodeState(nodeState.Current().RaftRole, nodeState.Current().Term, Some r.CandidateId)
+                peerSupervisor.RespondToVoteRequest msg.RequestId msg.SourceNodeId isSuccess
             | VoteResponse r          -> peerSupervisor.HandleVoteResponse msg
             | _                       -> invalidOp("Unknown message") |> raise // TODO deal with this better
         ()

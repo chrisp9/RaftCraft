@@ -64,8 +64,8 @@ type PeerSupervisor(configuration : RaftConfiguration, nodeState : NodeStateHold
     member __.RequestVote() = 
         newVoteRequest |> broadcastToAll
 
-    member __.RespondToVoteRequest (requestId : Guid) (sourceNodeId : int) =
-        let response = RaftMessage.NewVoteResponse(configuration.Self.NodeId, requestId, new VoteResponse(nodeState.Current().Term, true))
+    member __.RespondToVoteRequest (requestId : Guid) (sourceNodeId : int) (isSuccess : bool) =
+        let response = RaftMessage.NewVoteResponse(configuration.Self.NodeId, requestId, new VoteResponse(nodeState.Current().Term, isSuccess))
         clients.[sourceNodeId].Post(response)
 
     member __.HandleVoteResponse(response : RaftMessage) =
