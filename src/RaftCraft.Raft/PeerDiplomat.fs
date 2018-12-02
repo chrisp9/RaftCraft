@@ -19,7 +19,7 @@ type PeerDiplomat(peer : IRaftPeer, retryIntervalMs : int, timer : GlobalTimerHo
     let track message =
         match message with
             | AppendEntriesRequest _ | VoteRequest _ -> retryPipeline.Add(message, timer.CurrentTick)
-            | VoteResponse r -> retryPipeline.Remove(message.RequestId) |> ignore
+            | VoteResponse _ | AppendEntriesResponse _ -> retryPipeline.Remove(message.RequestId) |> ignore
             | _ -> ()
     
     let checkExpiries (tick : TimerTick) =
@@ -28,12 +28,8 @@ type PeerDiplomat(peer : IRaftPeer, retryIntervalMs : int, timer : GlobalTimerHo
     // TODO Consider whether it is best to check for expiry every clock tick? It's good in some ways but bad in others.
     let subscription = timer.Observable().Subscribe(checkExpiries)
 
-    member __.Notify(message : RaftMessage) =
+    member __.HandleResponse(message : RaftMessage) =
         track message
-
-        match message with
-            | AppendEntriesRequest _ | VoteRequest _ -> peer.Post message
-            | VoteResponse _ -> ()
 
     member __.Post(message : RaftMessage) =
         track message
@@ -65,18 +61,15 @@ type PeerSupervisor(configuration : RaftConfiguration, nodeState : NodeStateHold
             Guid.NewGuid(),
             new VoteRequest(nodeState.Current().Term, key, nodeState.LastLogIndex, nodeState.LastLogTerm))
 
-    let newVoteResponse (request : RaftMessage) =
-        let response = RaftMessage.NewVoteResponse(configuration.Self.NodeId, request.RequestId, new VoteResponse(nodeState.Current().Term, true))
-        clients.[request.SourceNodeId].Post(response)
-
     member __.RequestVote() = 
         newVoteRequest |> broadcastToAll
 
-    member __.VoteRequest(request : RaftMessage) =
-        newVoteResponse(request)
+    member __.RespondToVoteRequest (requestId : Guid) (sourceNodeId : int) =
+        let response = RaftMessage.NewVoteResponse(configuration.Self.NodeId, requestId, new VoteResponse(nodeState.Current().Term, true))
+        clients.[sourceNodeId].Post(response)
 
     member __.HandleVoteResponse(response : RaftMessage) =
-        clients.[response.SourceNodeId].Notify(response)
+        clients.[response.SourceNodeId].HandleResponse(response)
 
     member __.Start() =
         clients |> Seq.iter(fun client -> client.Value.Start())

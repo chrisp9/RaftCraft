@@ -19,7 +19,7 @@ type RaftNode
     let peerSupervisor = peerSupervisor nodeState
 
     let handleAppendEntriesRequest id appendEntriesRequest = ()
-    let handleVoteRequest id voteRequest = peerSupervisor.VoteRequest voteRequest
+    let handleVoteRequest id voteRequest = peerSupervisor.RespondToVoteRequest voteRequest
     let handleAppendEntriesResponse id appendEntriesResponse = ()
     let handleVoteResponse id voteResponse = peerSupervisor.HandleVoteResponse voteResponse
 
@@ -44,7 +44,7 @@ type RaftNode
         printfn "Received %s" (msg.ToString())
 
         match msg with
-            | VoteRequest r           -> handleVoteRequest r.CandidateId msg
+            | VoteRequest r           -> peerSupervisor.RespondToVoteRequest msg.RequestId msg.SourceNodeId
             | VoteResponse r          -> peerSupervisor.HandleVoteResponse msg
             | _                       -> invalidOp("Unknown message") |> raise // TODO deal with this better
         ()
