@@ -46,8 +46,14 @@ type RaftNode
         match msg with
             | VoteRequest r           -> 
                 let currentState = nodeState.Current()
+   
+                let candidateCheck =
+                    match currentState.VotedFor with
+                    | Some v -> if v = r.CandidateId then true else false
+                    | None -> true
+
                 let isSuccess = 
-                    if (r.Term >= currentState.Term  && r.LastLogIndex >= nodeState.LastLogIndex && r.LastLogTerm >= nodeState.LastLogTerm) 
+                    if (r.Term >= currentState.Term  && r.LastLogIndex >= nodeState.LastLogIndex && r.LastLogTerm >= nodeState.LastLogTerm && candidateCheck) 
                     then true 
                     else false
 
