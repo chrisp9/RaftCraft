@@ -24,10 +24,11 @@ namespace RaftCraft.Transport
         {
             // TODO handle exceptions properly.
              Console.WriteLine("Sending request: " + message);
-            if(_currentClient.WebSocket == null || _currentClient?.WebSocket?.State == System.Net.WebSockets.WebSocketState.Closed || 
-               _currentClient?.WebSocket?.State == System.Net.WebSockets.WebSocketState.Aborted)
+            if(_currentClient.WebSocket.State == System.Net.WebSockets.WebSocketState.Closed || 
+               _currentClient.WebSocket.State == System.Net.WebSockets.WebSocketState.Aborted)
             {
                 ErrorHandler(null);
+                return;
             }
 
             _currentClient.PostResponse(message);
@@ -45,10 +46,13 @@ namespace RaftCraft.Transport
             _currentClient.Start();
         }
 
+        private Task _errorTask = null;
+
         private void ErrorHandler(Exception e)
         {
             // Slight delay here to avoid swamping unresponsive peers.
-            Task.Delay(1000).ContinueWith(_ => Start());
+            if(_errorTask == null || (_errorTask.IsCompleted || _errorTask.IsFaulted))
+                _errorTask = Task.Delay(1000).ContinueWith(_ => Start());
         }
     }
 }

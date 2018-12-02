@@ -116,8 +116,7 @@ namespace RaftCraft.Transport
             }
             catch (Exception e)
             {
-                WebSocket.Dispose();
-                WebSocket = null;
+                WebSocket?.Dispose();
                 OnError?.Invoke(e);
             }
         }
@@ -138,8 +137,6 @@ namespace RaftCraft.Transport
                     }
                 }
                 WebSocket.Dispose();
-                WebSocket = null;
-
                 OnDisconnected?.Invoke();
             }
         }
