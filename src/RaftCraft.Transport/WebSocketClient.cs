@@ -14,7 +14,7 @@ namespace RaftCraft.Transport
         private const int ReceiveChunkSize = 1024;
         private const int SendChunkSize = 1024;
 
-        private ClientWebSocket _ws;
+        public ClientWebSocket WebSocket { get; private set; }
         private readonly Uri _uri;
         private readonly CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
         private readonly CancellationToken _cancellationToken;
@@ -48,10 +48,10 @@ namespace RaftCraft.Transport
 
         public void Start()
         {
-         if (_ws == null)
+         if (WebSocket == null)
             {
-                _ws = new ClientWebSocket();
-                _ws.Options.KeepAliveInterval = TimeSpan.FromSeconds(20);
+                WebSocket = new ClientWebSocket();
+                WebSocket.Options.KeepAliveInterval = TimeSpan.FromSeconds(20);
             }
 
             ConnectAsync();
@@ -76,16 +76,16 @@ namespace RaftCraft.Transport
         {
             get
             {
-                if (_ws == null)
+                if (WebSocket == null)
                     return WebSocketState.None;
 
-                return _ws.State;
+                return WebSocket.State;
             }
         }
 
         private async Task SendMessageAsync(byte[] message)
         {
-            if (_ws == null || _ws.State != WebSocketState.Open)
+            if (WebSocket == null || WebSocket.State != WebSocketState.Open)
             {
                 return;
             }
@@ -102,7 +102,7 @@ namespace RaftCraft.Transport
                 {
                     count = message.Length - offset;
                 }
-                await _ws.SendAsync(new ArraySegment<byte>(message, offset, count), WebSocketMessageType.Text, lastMessage, _cancellationToken);
+                await WebSocket.SendAsync(new ArraySegment<byte>(message, offset, count), WebSocketMessageType.Text, lastMessage, _cancellationToken);
             }
         }
 
@@ -110,35 +110,35 @@ namespace RaftCraft.Transport
         {
             try
             {
-                await _ws.ConnectAsync(_uri, _cancellationToken);
+                await WebSocket.ConnectAsync(_uri, _cancellationToken);
                 OnConnected?.Invoke();
                 StartListen();
             }
             catch (Exception e)
             {
-                _ws.Dispose();
-                _ws = null;
+                WebSocket.Dispose();
+                WebSocket = null;
                 OnError?.Invoke(e);
             }
         }
 
         private async void DisconnectAsync()
         {
-            if (_ws != null)
+            if (WebSocket != null)
             {
-                if (_ws.State != WebSocketState.Open)
+                if (WebSocket.State != WebSocketState.Open)
                 {
                     try
                     {
-                        await _ws.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, string.Empty, CancellationToken.None);
+                        await WebSocket.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, string.Empty, CancellationToken.None);
                     }
                     catch(Exception e)
                     {
                         Console.WriteLine("Exception during socket close: " + e);
                     }
                 }
-                _ws.Dispose();
-                _ws = null;
+                WebSocket.Dispose();
+                WebSocket = null;
 
                 OnDisconnected?.Invoke();
             }
@@ -150,14 +150,14 @@ namespace RaftCraft.Transport
 
             try
             {
-                while (_ws.State == WebSocketState.Open)
+                while (WebSocket.State == WebSocketState.Open)
                 {
                     byte[] byteResult = new byte[0];
 
                     WebSocketReceiveResult result;
                     do
                     {
-                        result = await _ws.ReceiveAsync(new ArraySegment<byte>(buffer), _cancellationToken);
+                        result = await WebSocket.ReceiveAsync(new ArraySegment<byte>(buffer), _cancellationToken);
 
                         if (result.MessageType == WebSocketMessageType.Close)
                         {

@@ -24,6 +24,12 @@ namespace RaftCraft.Transport
         {
             // TODO handle exceptions properly.
              Console.WriteLine("Sending request: " + message);
+            if(_currentClient.WebSocket == null || _currentClient?.WebSocket?.State == System.Net.WebSockets.WebSocketState.Closed || 
+               _currentClient?.WebSocket?.State == System.Net.WebSockets.WebSocketState.Aborted)
+            {
+                ErrorHandler(null);
+            }
+
             _currentClient.PostResponse(message);
         }
 
