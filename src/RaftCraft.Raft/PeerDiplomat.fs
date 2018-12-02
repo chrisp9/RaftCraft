@@ -6,6 +6,8 @@ open System
 open Utils
 open RaftCraft.RaftDomain
 open RaftTimer
+open System.Collections.Generic
+open System.Xml.Linq
 
 type RetryCount = int
 type ExpiryTick = int64
@@ -21,15 +23,15 @@ type PeerDiplomat(peer : IRaftPeer, retryIntervalMs : int, timer : GlobalTimerHo
             | AppendEntriesRequest _ | VoteRequest _ -> retryPipeline.Add(message, timer.CurrentTick)
             | VoteResponse _ | AppendEntriesResponse _ -> retryPipeline.Remove(message.RequestId) |> ignore
             | _ -> ()
-    
+
     let checkExpiries (tick : TimerTick) =
             retryPipeline.Expiry (tick) (fun msg -> peer.Post(msg))
 
     // TODO Consider whether it is best to check for expiry every clock tick? It's good in some ways but bad in others.
     let subscription = timer.Observable().Subscribe(checkExpiries)
 
-    member __.HandleResponse(message : RaftMessage) =
-        track message
+    member __.HandleResponse(request : Guid) =
+        retryPipeline.Remove(request) |> ignore
 
     member __.Post(message : RaftMessage) =
         track message
@@ -50,6 +52,8 @@ type PeerSupervisor(configuration : RaftConfiguration, nodeState : NodeStateHold
         configuration.Peers 
         |> Seq.map(fun node -> node.NodeId, clientFactory node)
         |> dict
+    
+    let nodesWithConsensus = HashSet<int>()
 
     let broadcastToAll create =
         clients
@@ -61,15 +65,21 @@ type PeerSupervisor(configuration : RaftConfiguration, nodeState : NodeStateHold
             Guid.NewGuid(),
             new VoteRequest(nodeState.Current().Term, key, nodeState.LastLogIndex, nodeState.LastLogTerm))
 
-    member __.RequestVote() = 
+    let electionConsensusReached = Event<_>()
+
+    member __.RequestVote() =
         newVoteRequest |> broadcastToAll
 
     member __.RespondToVoteRequest (requestId : Guid) (sourceNodeId : int) (isSuccess : bool) =
         let response = RaftMessage.NewVoteResponse(configuration.Self.NodeId, requestId, new VoteResponse(nodeState.Current().Term, isSuccess))
         clients.[sourceNodeId].Post(response)
 
-    member __.HandleVoteResponse(response : RaftMessage) =
-        clients.[response.SourceNodeId].HandleResponse(response)
+    member __.HandleVoteResponse(request : Guid) (sourceNodeId : int) (isSuccess : bool) =
+        clients.[sourceNodeId].HandleResponse(request)
+        if(isSuccess) then
+            nodesWithConsensus.Add(sourceNodeId) |> ignore
+            if nodesWithConsensus.Count > (configuration.Peers.Length + 1) / 2 then
+                electionConsensusReached.Trigger()
 
     member __.Start() =
         clients |> Seq.iter(fun client -> client.Value.Start())

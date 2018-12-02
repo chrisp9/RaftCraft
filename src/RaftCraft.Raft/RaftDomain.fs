@@ -18,8 +18,6 @@ type NodeStateHolder(initialState : NodeState, dataStore : IPersistentDataStore)
 
     member __.Update(newState : NodeState) =
         nodeState <- newState
-
-        // TODO: Should this be transactional? I think it needs to be otherwise we get very unlikely races on node restart.
         dataStore.Update(newState.Term, (newState.VotedFor |> Option.toNullable))
 
     member __.Current() = nodeState

@@ -18,7 +18,6 @@ let (|VoteRequest|_|) (request: RaftMessage) =
 let (|VoteResponse|_|) (request: RaftMessage) =
     !?request.VoteResponse
 
-
 type HashSetPool<'a>() =
     let hashSets = new Queue<HashSet<'a>>()
 

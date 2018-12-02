@@ -59,7 +59,7 @@ type RaftNode
 
                 nodeState.Update <| NodeState(nodeState.Current().RaftRole, nodeState.Current().Term, Some r.CandidateId)
                 peerSupervisor.RespondToVoteRequest msg.RequestId msg.SourceNodeId isSuccess
-            | VoteResponse r          -> peerSupervisor.HandleVoteResponse msg
+            | VoteResponse r          -> peerSupervisor.HandleVoteResponse msg.RequestId msg.SourceNodeId
             | _                       -> invalidOp("Unknown message") |> raise // TODO deal with this better
         ()
     
