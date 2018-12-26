@@ -24,10 +24,11 @@ type HashSetPool<'a>() =
     member __.Borrow() =
         if hashSets.Count = 0 then
             hashSets.Enqueue(new HashSet<'a>())
-        hashSets.Dequeue()
+        let set = hashSets.Dequeue()
+        set.Clear()
+        set
         
     member __.Return(set : HashSet<'a>) =
-        set.Clear()
         hashSets.Enqueue(set)
 
 // Holds entries for a fixed amount of time.
