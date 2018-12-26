@@ -37,15 +37,19 @@ namespace RaftCraft.Domain
 
         public RaftPeer[] Peers { get; set; }
 
+        public string LogFile { get; set; }
+
         // TODO hardcoded
         public int RequestRetryIntervalMs => 200;
 
         public RaftConfiguration(
             RaftHost self, 
-            RaftPeer[] peers)
+            RaftPeer[] peers,
+            string logFile)
         {
             Self = self;
             Peers = peers ?? new RaftPeer[0];
+            LogFile = logFile;
         }
     }
 }

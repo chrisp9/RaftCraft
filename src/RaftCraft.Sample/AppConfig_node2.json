@@ -1,16 +1,17 @@
 {
-    "Self": {
-      "NodeId": 2,
-      "Address": "ws://127.0.0.1:2501"
+  "Self": {
+    "NodeId": 2,
+    "Address": "ws://127.0.0.1:2501"
+  },
+  "Peers": [
+    {
+      "NodeId": 1,
+      "Address": "ws://127.0.0.1:2500"
     },
-    "Peers": [
-      {
-        "NodeId": 1,
-        "Address": "ws://127.0.0.1:2500"
-      },
-      {
-        "NodeId": 3,
-        "Address": "ws://127.0.0.1:2502"
-      }
-    ]
+    {
+      "NodeId": 3,
+      "Address": "ws://127.0.0.1:2502"
+    }
+  ],
+  "LogFile": "c:/RaftCraft/Log/node2.txt"
 }

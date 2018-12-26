@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using RaftCraft.Domain;
+using RaftCraft.Logging;
 using RaftCraft.Persistence;
 using RaftCraft.Raft;
 using RaftCraft.Transport;
@@ -25,9 +26,12 @@ namespace RaftCraft.Sample
 
             Func<RaftPeer, TransientWebSocketClient> socketFactory = peer => TransientWebSocketClient.Create(peer.Address);
 
+            var simpleLogger = new SimpleLogger(converted.LogFile);
+            Log.SetInstance(simpleLogger);
+
             var node = RaftSystem.RaftSystem.Create(
                 host => new RaftServer(host.Address),
-                peer => new PersistentWebSocketClient(peer, socketFactory),
+                peer => new PersistentWebSocketClient(peer, socketFactory, Log.Instance),
                 new SlowInMemoryDataStore(),
                 converted);
 

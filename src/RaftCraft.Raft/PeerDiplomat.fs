@@ -7,7 +7,6 @@ open Utils
 open RaftCraft.RaftDomain
 open RaftTimer
 open System.Collections.Generic
-open System.Xml.Linq
 
 type RetryCount = int
 type ExpiryTick = int64
@@ -76,6 +75,7 @@ type PeerSupervisor(configuration : RaftConfiguration, nodeState : NodeStateHold
 
     member __.HandleVoteResponse(request : Guid) (sourceNodeId : int) (isSuccess : bool) =
         clients.[sourceNodeId].HandleResponse(request)
+
         if(isSuccess) then
             nodesWithConsensus.Add(sourceNodeId) |> ignore
             if nodesWithConsensus.Count > (configuration.Peers.Length + 1) / 2 then

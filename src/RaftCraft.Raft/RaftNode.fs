@@ -6,6 +6,7 @@ open RaftCraft.Domain
 open RaftCraft.RaftDomain
 open Utils
 open RaftCraft
+open RaftCraft.Logging
 
 type RaftNode
         (serverFactory : RaftHost -> IRaftHost,
@@ -15,16 +16,9 @@ type RaftNode
          nodeStateHolderFactory : NodeState -> NodeStateHolder) =
     
     let nodeState = NodeState(RaftRole.Follower, 0, Option.None) |> nodeStateHolderFactory
-
     let peerSupervisor = peerSupervisor nodeState
 
-    let handleAppendEntriesRequest id appendEntriesRequest = ()
-    let handleVoteRequest id voteRequest = peerSupervisor.RespondToVoteRequest voteRequest
-    let handleAppendEntriesResponse id appendEntriesResponse = ()
-    let handleVoteResponse id voteResponse = peerSupervisor.HandleVoteResponse voteResponse
-
     // Initially we are a follower at term 0 and we haven't voted for anyone.
-
 
     let eventStream = Event<DomainEvent>()
     let server = serverFactory configuration.Self
@@ -41,10 +35,10 @@ type RaftNode
     )
 
     let onMessage (msg : RaftMessage) =
-        printfn "Received %s" (msg.ToString())
+        Log.Instance.Info("Received " + msg.ToString())
 
         match msg with
-            | VoteRequest r           -> 
+            | VoteRequest r -> 
                 let currentState = nodeState.Current()
    
                 let candidateCheck =
@@ -59,18 +53,18 @@ type RaftNode
 
                 nodeState.Update <| NodeState(nodeState.Current().RaftRole, nodeState.Current().Term, Some r.CandidateId)
                 peerSupervisor.RespondToVoteRequest msg.RequestId msg.SourceNodeId isSuccess
-            | VoteResponse r          -> peerSupervisor.HandleVoteResponse msg.RequestId msg.SourceNodeId
-            | _                       -> invalidOp("Unknown message") |> raise // TODO deal with this better
+            | VoteResponse r -> peerSupervisor.HandleVoteResponse msg.RequestId msg.SourceNodeId r.VoteGranted
+            | _ -> invalidOp("Unknown message") |> raise // TODO deal with this better
         ()
     
     let transitionToFollowerState() =
-        Console.WriteLine("Transitioning to follower")
+        Log.Instance.Info("Transitioning to follower")
 
         nodeState.Update <| NodeState(RaftRole.Candidate, nodeState.Current().Term + 1, None)
         electionTimer.Start(fun _ -> agent.Post(DomainEvent.ElectionTimerFired))
 
     let transitionToCandidateState() =
-        Console.WriteLine("Transitioning to candidate");
+        Log.Instance.Info("Transitioning to candidate");
 
         nodeState.Update <| NodeState(RaftRole.Candidate, nodeState.Current().Term + 1, Some configuration.Self.NodeId)
         electionTimer.Start(fun _ -> agent.Post(DomainEvent.ElectionTimerFired))
@@ -90,7 +84,7 @@ type RaftNode
 
     member __.Server = server
 
-    member this.Start() =
+    member __.Start() =
         // Important to transition to follower before starting the server to avoid race conditions.
         transitionToFollowerState()
         server.Start (fun msg -> agent.Post(DomainEvent.Request(msg)))

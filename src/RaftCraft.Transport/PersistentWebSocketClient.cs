@@ -11,19 +11,23 @@ namespace RaftCraft.Transport
         private readonly RaftPeer _peer;
         private readonly Func<RaftPeer, TransientWebSocketClient> _clientFactory;
         private TransientWebSocketClient _currentClient;
+        private readonly ILogger _log;
 
         public PersistentWebSocketClient(
             RaftPeer peer, 
-            Func<RaftPeer, TransientWebSocketClient> clientFactory)
+            Func<RaftPeer, TransientWebSocketClient> clientFactory,
+            ILogger log)
         {
             _peer = peer;
             _clientFactory = clientFactory;
+            _log = log;
         }
 
         public void Post(RaftMessage message)
         {
             // TODO handle exceptions properly.
-             Console.WriteLine("Sending request: " + message);
+            _log.Info("Sending request: " + message);
+
             if(_currentClient.WebSocket.State == System.Net.WebSockets.WebSocketState.Closed || 
                _currentClient.WebSocket.State == System.Net.WebSockets.WebSocketState.Aborted)
             {

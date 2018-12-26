@@ -5,6 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="Logger.fs" />
     <Compile Include="Operators.fs" />
     <Compile Include="RaftDomain.fs" />
     <Compile Include="Utils.fs" />
