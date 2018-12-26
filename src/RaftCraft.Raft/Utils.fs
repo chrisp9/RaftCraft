@@ -88,31 +88,33 @@ type Pipeline(retryIntervalMs : int) =
             expiriesForThisTick.Add(message.RequestId) |> ignore
 
             requestsById.[message.RequestId] <- message)
-           
+       
     member __.Expiry (currentTick : TimerTick) (post) =
         lock token (fun() ->
-            let success, requests = requestsByTick.TryGetValue(currentTick.CurrentTick)
 
-            if success then
-                requestsByTick.Remove(currentTick.CurrentTick) |> ignore
-                let expiryTick = currentTick.CurrentTick + ((int64 retryIntervalMs) / (int64 (currentTick.Granularity)))
+            for item in requestsByTick do
+                if (item.Key <= currentTick.CurrentTick) then 
+                    let requests = item.Value
+
+                    requestsByTick.Remove(currentTick.CurrentTick) |> ignore
+                    let expiryTick = currentTick.CurrentTick + ((int64 retryIntervalMs) / (int64 (currentTick.Granularity)))
                 
-                let hasValue, existingRequests = requestsByTick.TryGetValue expiryTick
-                if hasValue then
-                    for request in requests do
-                        if(requestsById.ContainsKey(request)) then
-                            existingRequests.Add(request) |> ignore
-                    else
-                        for request in new HashSet<Guid>(requests) do 
-                            if(not (requestsById.ContainsKey(request))) then
-                                requests.Remove(request) |> ignore
-                        
-                        if(requests.Count = 0) then 
-                            pool.Return(requests)
+                    let hasValue, existingRequests = requestsByTick.TryGetValue expiryTick
+                    if hasValue then
+                        for request in requests do
+                            if(requestsById.ContainsKey(request)) then
+                                existingRequests.Add(request) |> ignore
                         else
-                            requestsByTick.[expiryTick] <- requests
+                            for request in new HashSet<Guid>(requests) do 
+                                if(not (requestsById.ContainsKey(request))) then
+                                    requests.Remove(request) |> ignore
+                        
+                            if(requests.Count = 0) then 
+                                pool.Return(requests)
+                            else
+                                requestsByTick.[expiryTick] <- requests
 
-                for request in requests do
-                    let success, messageForRequest = requestsById.TryGetValue(request)
+                    for request in requests do
+                        let success, messageForRequest = requestsById.TryGetValue(request)
 
-                    if success then post messageForRequest)
+                        if success then post messageForRequest)
