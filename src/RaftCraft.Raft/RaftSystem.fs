@@ -28,7 +28,7 @@ type RaftSystem() =
         let translatedServerFactory = serverFactory.Invoke
         let translatedClientFactory = clientFactory.Invoke
 
-        let peerSupervisorFactory = fun v -> new PeerSupervisor(configuration, v, fun v -> new PeerDiplomat(translatedClientFactory(v), 200, timerHolder))
+        let peerSupervisorFactory = fun v -> new PeerSupervisor(configuration, v, fun v -> fun ns -> new PeerDiplomat(translatedClientFactory(v), ns, 200, timerHolder))
         let nodeStateHolderFactory = fun v -> new NodeStateHolder(v, persistentDataStore)
 
         let raftNode =  RaftNode(translatedServerFactory, configuration, electionTimerHolder, peerSupervisorFactory, nodeStateHolderFactory)

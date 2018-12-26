@@ -88,33 +88,47 @@ type Pipeline(retryIntervalMs : int) =
             expiriesForThisTick.Add(message.RequestId) |> ignore
 
             requestsById.[message.RequestId] <- message)
-       
-    member __.Expiry (currentTick : TimerTick) (post) =
+           
+    member __.Expiry (currentTick : TimerTick) (nodeState : NodeStateHolder) (post) =
         lock token (fun() ->
+            let ticks = HashSet()
+            let requests = HashSet()
+
+            let term = nodeState.Current().Term
 
             for item in requestsByTick do
-                if (item.Key <= currentTick.CurrentTick) then 
-                    let requests = item.Value
+                if item.Key <= currentTick.CurrentTick then
+                    ticks.Add(item.Key) |> ignore
 
-                    requestsByTick.Remove(currentTick.CurrentTick) |> ignore
-                    let expiryTick = currentTick.CurrentTick + ((int64 retryIntervalMs) / (int64 (currentTick.Granularity)))
-                
-                    let hasValue, existingRequests = requestsByTick.TryGetValue expiryTick
-                    if hasValue then
-                        for request in requests do
-                            if(requestsById.ContainsKey(request)) then
-                                existingRequests.Add(request) |> ignore
+                    for expiryCheckedItem in item.Value do
+                        let success, message = requestsById.TryGetValue expiryCheckedItem
+
+                        if(success && message.Term >= term) then
+                            requests.Add(expiryCheckedItem) |> ignore
                         else
-                            for request in new HashSet<Guid>(requests) do 
-                                if(not (requestsById.ContainsKey(request))) then
-                                    requests.Remove(request) |> ignore
+                            requestsById.Remove expiryCheckedItem |> ignore
+            
+            for item in ticks do
+                requestsByTick.Remove(item) |> ignore
+
+            let expiryTick = currentTick.CurrentTick + ((int64 retryIntervalMs) / (int64 (currentTick.Granularity)))
+                
+            let itemsAtExpiryTick = getOrAdd (requestsByTick, expiryTick, fun () -> HashSet<Guid>())
+           
+            for request in requests do
+                if(requestsById.ContainsKey(request)) then
+                    itemsAtExpiryTick.Add(request) |> ignore
+                else
+                    for request in new HashSet<Guid>(requests) do 
+                        if(not (requestsById.ContainsKey(request))) then
+                            requests.Remove(request) |> ignore
                         
-                            if(requests.Count = 0) then 
-                                pool.Return(requests)
-                            else
-                                requestsByTick.[expiryTick] <- requests
+                    if(requests.Count = 0) then 
+                        pool.Return(requests)
+                    else
+                        requestsByTick.[expiryTick] <- requests
 
-                    for request in requests do
-                        let success, messageForRequest = requestsById.TryGetValue(request)
+            for request in requests do
+                let success, messageForRequest = requestsById.TryGetValue(request)
 
-                        if success then post messageForRequest)
+                if success then post messageForRequest)

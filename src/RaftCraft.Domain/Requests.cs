@@ -25,13 +25,17 @@ namespace RaftCraft.Domain
         [ProtoMember(6)]
         public VoteResponse VoteResponse { get; set; }
 
+        [ProtoMember(7)]
+        public int Term { get; set; }
+
         private RaftMessage(
             int sourceNodeId,
             Guid requestId,
             AppendEntriesRequest appendEntriesRequest,
             AppendEntriesResponse appendEntriesResponse,
             VoteRequest voteRequest,
-            VoteResponse voteResponse)
+            VoteResponse voteResponse,
+            int term)
         {
             RequestId = requestId;
             SourceNodeId = sourceNodeId;
@@ -41,6 +45,7 @@ namespace RaftCraft.Domain
 
             VoteRequest = voteRequest;
             VoteResponse = voteResponse;
+            Term = term;
         }
 
         public override string ToString()
@@ -68,15 +73,16 @@ namespace RaftCraft.Domain
             Guid requestId, 
             AppendEntriesRequest appendEntries)
         {
-            return new RaftMessage(nodeId, requestId, appendEntries, null, null, null);
+            return new RaftMessage(nodeId, requestId, appendEntries, null, null, null, appendEntries.Term);
         }
 
         public static RaftMessage NewAppendEntriesResponse(
             int nodeId,
             Guid requestId,
-            AppendEntriesResponse appendEntriesResponse)
+            AppendEntriesResponse appendEntriesResponse,
+            int term)
         {
-            return new RaftMessage(nodeId, requestId, null, appendEntriesResponse, null, null);
+            return new RaftMessage(nodeId, requestId, null, appendEntriesResponse, null, null, term);
         }
 
         public static RaftMessage NewVoteRequest(
@@ -84,7 +90,7 @@ namespace RaftCraft.Domain
             Guid requestId, 
             VoteRequest voteRequest)
         {
-            return new RaftMessage(nodeId, requestId, null, null, voteRequest, null);
+            return new RaftMessage(nodeId, requestId, null, null, voteRequest, null, voteRequest.Term);
         }
 
         public static RaftMessage NewVoteResponse(
@@ -92,7 +98,7 @@ namespace RaftCraft.Domain
             Guid requestId,
             VoteResponse voteResponse)
         {
-            return new RaftMessage(nodeId, requestId, null, null, null, voteResponse);
+            return new RaftMessage(nodeId, requestId, null, null, null, voteResponse, voteResponse.Term);
         }
     }
 
