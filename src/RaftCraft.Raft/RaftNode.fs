@@ -43,7 +43,7 @@ type RaftNode
             | None -> true
 
         let isSuccess = 
-            if (r.Term >= currentState.Term  && r.LastLogIndex >= nodeState.LastLogIndex && r.LastLogTerm >= nodeState.LastLogTerm && candidateCheck) 
+            if (r.Term >= currentState.Term && r.LastLogIndex >= nodeState.LastLogIndex && r.LastLogTerm >= nodeState.LastLogTerm && candidateCheck) 
             then true 
             else false
 
@@ -53,6 +53,9 @@ type RaftNode
            match isSuccess with
                 | true -> Some r.CandidateId
                 | false -> None
+
+        if isSuccess then 
+            electionTimer.Reset()
 
         nodeState.Update <| NodeState(nodeState.Current().RaftRole, newTerm, votedFor)
         peerSupervisor.RespondToVoteRequest msg.RequestId msg.SourceNodeId isSuccess
