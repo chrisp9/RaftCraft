@@ -56,18 +56,18 @@ type PeerSupervisor(configuration : RaftConfiguration, nodeState : NodeStateHold
 
     let broadcastToAll create =
         clients
-        |> Seq.iter(fun client -> client.Value.Post (create client.Key))
+        |> Seq.iter(fun client -> client.Value.Post (create))
 
-    let newVoteRequest key =
+    let newVoteRequest() =
         RaftMessage.NewVoteRequest(
             configuration.Self.NodeId,
             Guid.NewGuid(),
-            new VoteRequest(nodeState.Current().Term, key, nodeState.LastLogIndex, nodeState.LastLogTerm))
+            new VoteRequest(nodeState.Current().Term, configuration.Self.NodeId, nodeState.LastLogIndex, nodeState.LastLogTerm))
 
     let electionConsensusReached = Event<_>()
 
     member __.RequestVote() =
-        newVoteRequest |> broadcastToAll
+        newVoteRequest() |> broadcastToAll
 
     member __.RespondToVoteRequest (requestId : Guid) (sourceNodeId : int) (isSuccess : bool) =
         let response = RaftMessage.NewVoteResponse(configuration.Self.NodeId, requestId, new VoteResponse(nodeState.Current().Term, isSuccess))

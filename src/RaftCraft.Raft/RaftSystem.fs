@@ -20,7 +20,7 @@ type RaftSystem() =
         let globalTimerFactory = fun v -> new GlobalTimer(v)
         let timerHolder = GlobalTimerHolder(globalTimerFactory, int64 50)
 
-        let electionTimerFactory = fun() -> ElectionTimer(timerHolder, int64 1000)
+        let electionTimerFactory = fun() -> ElectionTimer(timerHolder, int64 5000)
         let electionTimerHolder = ElectionTimerHolder(electionTimerFactory)
 
         // We translate from Func<_> to F#Func because this code is called from C# and want to keep

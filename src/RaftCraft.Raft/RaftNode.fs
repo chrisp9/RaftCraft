@@ -7,6 +7,7 @@ open RaftCraft.RaftDomain
 open Utils
 open RaftCraft
 open RaftCraft.Logging
+open Subscription
 
 type RaftNode
         (serverFactory : RaftHost -> IRaftHost,
@@ -34,7 +35,7 @@ type RaftNode
         messageLoop()
     )
 
-    let doVoteRequest (msg : RaftMessage) (r : VoteRequest) = 
+    let handleVoteRequest (msg : RaftMessage) (r : VoteRequest) = 
         let currentState = nodeState.Current()
    
         let candidateCheck =
@@ -64,7 +65,7 @@ type RaftNode
         Log.Instance.Info("Received " + msg.ToString())
 
         match msg with
-            | VoteRequest r -> doVoteRequest msg r
+            | VoteRequest r -> handleVoteRequest msg r
             | VoteResponse r -> peerSupervisor.HandleVoteResponse msg.RequestId msg.SourceNodeId r.VoteGranted
             | _ -> invalidOp("Unknown message") |> raise // TODO deal with this better
         ()
