@@ -34,25 +34,34 @@ type RaftNode
         messageLoop()
     )
 
+    let doVoteRequest (msg : RaftMessage) (r : VoteRequest) = 
+        let currentState = nodeState.Current()
+   
+        let candidateCheck =
+            match currentState.VotedFor with
+            | Some v -> if v = r.CandidateId then true else false
+            | None -> true
+
+        let isSuccess = 
+            if (r.Term >= currentState.Term  && r.LastLogIndex >= nodeState.LastLogIndex && r.LastLogTerm >= nodeState.LastLogTerm && candidateCheck) 
+            then true 
+            else false
+
+        let newTerm = Math.Max(nodeState.Current().Term, r.Term)
+
+        let votedFor = 
+           match isSuccess with
+                | true -> Some r.CandidateId
+                | false -> None
+
+        nodeState.Update <| NodeState(nodeState.Current().RaftRole, newTerm, votedFor)
+        peerSupervisor.RespondToVoteRequest msg.RequestId msg.SourceNodeId isSuccess
+
     let onMessage (msg : RaftMessage) =
         Log.Instance.Info("Received " + msg.ToString())
 
         match msg with
-            | VoteRequest r -> 
-                let currentState = nodeState.Current()
-   
-                let candidateCheck =
-                    match currentState.VotedFor with
-                    | Some v -> if v = r.CandidateId then true else false
-                    | None -> true
-
-                let isSuccess = 
-                    if (r.Term >= currentState.Term  && r.LastLogIndex >= nodeState.LastLogIndex && r.LastLogTerm >= nodeState.LastLogTerm && candidateCheck) 
-                    then true 
-                    else false
-
-                nodeState.Update <| NodeState(nodeState.Current().RaftRole, nodeState.Current().Term, Some r.CandidateId)
-                peerSupervisor.RespondToVoteRequest msg.RequestId msg.SourceNodeId isSuccess
+            | VoteRequest r -> doVoteRequest msg r
             | VoteResponse r -> peerSupervisor.HandleVoteResponse msg.RequestId msg.SourceNodeId r.VoteGranted
             | _ -> invalidOp("Unknown message") |> raise // TODO deal with this better
         ()
