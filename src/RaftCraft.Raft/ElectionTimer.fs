@@ -8,7 +8,7 @@ open RaftCraft.Logging
 
 type TimerExpiry(expiry) =
     let mutable currentExpiry : int64 = expiry
-    member __.Expiry = expiry
+    member __.Expiry = currentExpiry
     member __.Reset(expiry) = currentExpiry <- expiry
 
 type ElectionTimer(timer : GlobalTimerHolder, electionTimerTimeout : int64) =
