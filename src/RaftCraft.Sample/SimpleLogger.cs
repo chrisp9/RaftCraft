@@ -84,14 +84,11 @@ namespace RaftCraft.Sample
         {
             lock(_lock)
             {
-                lock (_lock)
+                try
                 {
-                    try
-                    {
-                        File.AppendAllText(_logFile, Prefix(LogLevel.Debug) + text + "\r\n");
-                    }
-                    catch (Exception) { }
+                    File.AppendAllText(_logFile, Prefix(LogLevel.Debug) + text + "\r\n");
                 }
+                catch (Exception) { }
             }
         }
     }
