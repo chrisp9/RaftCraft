@@ -1,23 +1,47 @@
 ﻿using RaftCraft.Interfaces;
 using System;
+using System.Linq;
 using System.IO;
 
 namespace RaftCraft.Sample
 {
+    public enum LogLevel
+    {
+        Debug,
+        Info,
+        Warn,
+        Error
+    }
+
     // TODO not efficient. Replace with a proper logger.
     public class SimpleLogger : ILogger
     {
         private string _logFile;
         private readonly object _lock = new object();
 
+        private static readonly int PadAmount;
+
+        static SimpleLogger()
+        {
+            PadAmount = Enum.GetValues(typeof(LogLevel))
+                .Cast<object>()
+                .Select(v => v.ToString().Length)
+                .Max();
+        }
+
         public SimpleLogger(string logFile)
         {
             _logFile = logFile;
         }
 
-        private string Prefix(string detail)
+        private string Pad(string detail)
         {
-            return $"{DateTime.UtcNow}: [{detail}] - ";
+            return detail.PadLeft(PadAmount);
+        }
+
+        private string Prefix(LogLevel logLevel)
+        {
+            return $"{DateTime.UtcNow}: [{Pad(logLevel.ToString())}] - ";
         }
 
         public void Error(string text, Exception e)
@@ -26,7 +50,7 @@ namespace RaftCraft.Sample
             {
                 try
                 {
-                    File.AppendAllText(_logFile, Prefix("Error") + e + text + "\r\n");
+                    File.AppendAllText(_logFile, Prefix(LogLevel.Error) + e + text + "\r\n");
                 }
                 catch(Exception) { }
             }
@@ -38,7 +62,7 @@ namespace RaftCraft.Sample
             {
                 try
                 {
-                    File.AppendAllText(_logFile, Prefix("Info") + text + "\r\n");
+                    File.AppendAllText(_logFile, Prefix(LogLevel.Info) + text + "\r\n");
                 }
                 catch(Exception) { }
             }
@@ -50,7 +74,7 @@ namespace RaftCraft.Sample
             {
                 try
                 {
-                    File.AppendAllText(_logFile, Prefix("Warn") + text + "\r\n");
+                    File.AppendAllText(_logFile, Prefix(LogLevel.Warn) + text + "\r\n");
                 }
                 catch(Exception) { }
             }
@@ -64,7 +88,7 @@ namespace RaftCraft.Sample
                 {
                     try
                     {
-                        File.AppendAllText(_logFile, Prefix("Debug") + text + "\r\n");
+                        File.AppendAllText(_logFile, Prefix(LogLevel.Debug) + text + "\r\n");
                     }
                     catch (Exception) { }
                 }
