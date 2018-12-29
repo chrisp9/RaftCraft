@@ -32,7 +32,7 @@ type ElectionTimer(timer : GlobalTimerHolder, electionTimerTimeout : int64) =
 
         let previousExpiry = timerExpiry.Expiry
 
-        Log.Instance.Debug <| sprintf "Resetting ElectionTimer. PreviousExpiry was %s, NewExpiry is %s" (previousExpiry.ToString()) (expiry.ToString())
+        Log.Instance.Debug <| sprintf "Resetting ElectionTimer. CurrentTick is %s PreviousExpiry was %s, NewExpiry is %s" (timer.CurrentTick.CurrentTick.ToString()) (previousExpiry.ToString()) (expiry.ToString())
 
         timerExpiry.Reset(expiry)
     
