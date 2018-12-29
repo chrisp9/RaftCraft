@@ -59,8 +59,10 @@ type ElectionTimerHolder(timer : unit -> ElectionTimer) =
         stop()
 
     member __.Start(onFired : TimerTick -> unit) =
-        Log.Instance.Debug("Election Timer is Starting")
         stop()
+
+        Log.Instance.Debug("Election Timer is Starting")
+
         let currentTimer = timer()
 
         electionTimer <- Some currentTimer
