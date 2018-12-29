@@ -66,12 +66,6 @@ type Pipeline(retryIntervalMs : int) =
     member __.Remove(messageId) =  
         lock token (fun() ->
             let result = requestsById.Remove(messageId)
-
-            if result then
-                Console.WriteLine("A")
-            else
-                Console.WriteLine("B")
-
             result
         )
 
@@ -90,6 +84,11 @@ type Pipeline(retryIntervalMs : int) =
 
             requestsById.[message.RequestId] <- message)
            
+    // Checks for any requests which have expired on the current tick (or before). 
+    // Retries sending any requests which are still in-flight (haven't received
+    // a response from the Peer).
+    // Cleans up any requests which are no longer in-flight so that we don't retry
+    // them again.
     member __.Expiry (currentTick : TimerTick) (nodeState : NodeStateHolder) (post) =
         lock token (fun() ->
             let ticks = HashSet()
@@ -97,6 +96,8 @@ type Pipeline(retryIntervalMs : int) =
 
             let term = nodeState.Current().Term
 
+            // First we need to figure out which messages are no longer in-flight so that
+            // we don't resend them forever....
             for item in requestsByTick do
                 if item.Key <= currentTick.CurrentTick then
                     ticks.Add(item.Key) |> ignore
@@ -116,6 +117,8 @@ type Pipeline(retryIntervalMs : int) =
                 
             let itemsAtExpiryTick = getOrAdd (requestsByTick, expiryTick, fun () -> HashSet<Guid>())
            
+            // Before posting retries for the messages, we need to schedule retries for a future time- otherwise we will have
+            // lost track of them!
             for request in requests do
                 if(requestsById.ContainsKey(request)) then
                     itemsAtExpiryTick.Add(request) |> ignore
@@ -128,7 +131,8 @@ type Pipeline(retryIntervalMs : int) =
                         pool.Return(requests)
                     else
                         requestsByTick.[expiryTick] <- requests
-
+            
+            // Now that our schedule has been updated, we can post the messages.
             for request in requests do
                 let success, messageForRequest = requestsById.TryGetValue(request)
 
