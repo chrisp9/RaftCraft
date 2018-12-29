@@ -7,5 +7,6 @@ namespace RaftCraft.Interfaces
         void Error(string text, Exception e);
         void Warn(string text);
         void Info(string text);
+        void Debug(string text);
     }
 }

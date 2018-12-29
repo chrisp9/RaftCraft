@@ -55,9 +55,9 @@ type RaftNode
                 | false -> None
 
         if isSuccess then 
+            Log.Instance.Info("Successful response")
             electionTimer.Reset()
             nodeState.Update <| NodeState(nodeState.Current().RaftRole, newTerm, votedFor)
-
 
         peerSupervisor.RespondToVoteRequest msg.RequestId msg.SourceNodeId isSuccess
 

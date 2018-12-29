@@ -4,6 +4,7 @@ open System
 open RaftTimer
 open Subscription
 open RaftCraft.RaftDomain
+open RaftCraft.Logging
 
 type TimerExpiry(expiry) =
     let mutable currentExpiry : int64 = expiry
@@ -26,20 +27,27 @@ type ElectionTimer(timer : GlobalTimerHolder, electionTimerTimeout : int64) =
             | v when v.Expiry <= tick.CurrentTick -> true
             | _ -> false
 
-    member __.Reset() =
-        timerExpiry.Reset(getNextExpiry())
+    let reset() =
+        let expiry = getNextExpiry()
+
+        let previousExpiry = timerExpiry.Expiry
+
+        Log.Instance.Debug <| sprintf "Resetting ElectionTimer. PreviousExpiry was %s, NewExpiry is %s" (previousExpiry.ToString()) (expiry.ToString())
+
+        timerExpiry.Reset(expiry)
+    
     member __.Subscribe f =
         timer.Observable() 
-
             |> Observable.filter(expiryCheck) 
-            |> Subscription<Election>.subscribe f (fun() -> timerExpiry.Reset(getNextExpiry()))
+            |> Subscription<Election>.subscribe f (fun() -> reset())
 
 type ElectionTimerHolder(timer : unit -> ElectionTimer) =
-    
     let mutable electionTimer = Option.None
     let mutable electionTimerSubscription : Subscription<Election> option = Option.None
 
     let stop() = 
+        Log.Instance.Debug("Election Timer is stopping")
+
         match electionTimerSubscription with
             | Some v -> v.Dispose()
             | None -> ()
@@ -51,16 +59,20 @@ type ElectionTimerHolder(timer : unit -> ElectionTimer) =
         stop()
 
     member __.Start(onFired : TimerTick -> unit) =
+        Log.Instance.Debug("Election Timer is Starting")
         stop()
         let currentTimer = timer()
 
         electionTimer <- Some currentTimer
         electionTimerSubscription <- Some (currentTimer.Subscribe 
             (fun tick -> 
+                Log.Instance.Debug("Election Timer is firing")
                 stop()
                 onFired(tick)))
 
     member __.Reset() =
+        Log.Instance.Debug("Election Timer is resetting")
+
         match electionTimerSubscription with
             | Some value -> value.Reset()
             | None -> ()

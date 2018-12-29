@@ -55,5 +55,20 @@ namespace RaftCraft.Sample
                 catch(Exception) { }
             }
         }
+
+        public void Debug(string text)
+        {
+            lock(_lock)
+            {
+                lock (_lock)
+                {
+                    try
+                    {
+                        File.AppendAllText(_logFile, Prefix("Debug") + text + "\r\n");
+                    }
+                    catch (Exception) { }
+                }
+            }
+        }
     }
 }
