@@ -41,7 +41,7 @@ namespace RaftCraft.Sample
 
         private string Prefix(LogLevel logLevel)
         {
-            return $"{DateTime.UtcNow}: [{Pad(logLevel.ToString())}] - ";
+            return $"{DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss.fff")}: [{Pad(logLevel.ToString())}] - ";
         }
 
         public void Error(string text, Exception e)

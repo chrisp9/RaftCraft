@@ -62,13 +62,15 @@ type ElectionTimerHolder(timer : unit -> ElectionTimer) =
         stop()
 
         Log.Instance.Debug("Election Timer is Starting")
-
+         
         let currentTimer = timer()
 
         electionTimer <- Some currentTimer
         electionTimerSubscription <- Some (currentTimer.Subscribe 
             (fun tick -> 
-                Log.Instance.Debug("Election Timer is firing")
+                let logLine = sprintf "Election Timer is firing at tick: %s" (tick.CurrentTick.ToString())
+
+                Log.Instance.Debug(logLine)
                 stop()
                 onFired(tick)))
 
