@@ -16,8 +16,8 @@ type ElectionTimer(timer : GlobalTimerHolder, electionTimerTimeout : int64) =
 
     let getNextExpiry() =
         let tick = timer.CurrentTick
-        let fuzzFactor = int64 (rng.Next(int tick.Granularity) / 4) 
-        let scheduledTick = (tick.CurrentTick + (electionTimerTimeout / tick.Granularity) + fuzzFactor)
+        let fuzzFactor = int64 (rng.Next(int tick.Granularity) / 2) 
+        let scheduledTick = (tick.CurrentTick + (electionTimerTimeout / tick.Granularity) + fuzzFactor + int64 10)
         scheduledTick
 
     let timerExpiry = TimerExpiry(getNextExpiry())
@@ -79,4 +79,4 @@ type ElectionTimerHolder(timer : unit -> ElectionTimer) =
 
         match electionTimerSubscription with
             | Some value -> value.Reset()
-            | None -> ()
+            | None -> Log.Instance.Debug("ElectionTimer was reset with no active subscription")
