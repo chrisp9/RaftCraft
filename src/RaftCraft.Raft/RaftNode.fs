@@ -7,6 +7,7 @@ open RaftCraft.RaftDomain
 open Utils
 open RaftCraft
 open RaftCraft.Logging
+open System.Xml.Linq
 
 type RaftNode
         (serverFactory : RaftHost -> IRaftHost,
@@ -75,6 +76,12 @@ type RaftNode
             | VoteResponse r -> peerSupervisor.HandleVoteResponse msg.RequestId msg.SourceNodeId r.VoteGranted
             | _ -> invalidOp("Unknown message") |> raise // TODO deal with this better
         ()
+
+    let transitionToLeaderState() =
+        Log.Instance.Info("Transitioning to leader")
+
+        nodeState.Update <| NodeState(RaftRole.Leader, nodeState.Current().Term + 1, None)
+
     
     let transitionToFollowerState() =
         Log.Instance.Info("Transitioning to follower")
@@ -100,6 +107,10 @@ type RaftNode
             match msg with
                 | DomainEvent.Request r -> onMessage(r)
                 | DomainEvent.ElectionTimerFired -> electionTimerFired())
+
+    let leaderElectionSubscription = 
+        nodeState.ElectedLeader |> Observable.subscribe(fun() -> 
+            transitionToLeaderState())
 
     member __.Server = server
 

@@ -7,6 +7,7 @@ open Utils
 open RaftCraft.RaftDomain
 open RaftTimer
 open System.Collections.Generic
+open System.Xml.Linq
 
 type RetryCount = int
 type ExpiryTick = int64
@@ -69,9 +70,11 @@ type PeerSupervisor(configuration : RaftConfiguration, nodeState : NodeStateHold
         let response = RaftMessage.NewVoteResponse(configuration.Self.NodeId, requestId, new VoteResponse(nodeState.Current().Term, isSuccess))
         clients.[sourceNodeId].Post(response)
 
-    member __.HandleVoteResponse(request : Guid) (sourceNodeId : int) =
+    member __.HandleVoteResponse(request : Guid) (sourceNodeId : int) (isSuccess : bool) =
         clients.[sourceNodeId].HandleResponse(request)
-        if nodesWithConsensus.Count > (configuration.Peers.Length + 1) / 2 then
+        
+        if isSuccess && nodeState.Current().RaftRole = RaftRole.Candidate then 
+            nodeState.Vote sourceNodeId
 
     member __.Start() =
         clients |> Seq.iter(fun client -> client.Value.Start())
