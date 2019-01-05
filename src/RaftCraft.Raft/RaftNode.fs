@@ -79,6 +79,7 @@ type RaftNode
 
     let transitionToLeaderState() =
         Log.Instance.Info("Transitioning to leader")
+        electionTimer.Stop()
 
         nodeState.Update <| NodeState(RaftRole.Leader, nodeState.Current().Term + 1, None)
 
@@ -100,7 +101,7 @@ type RaftNode
         match nodeState.Current().RaftRole with
             | RaftRole.Candidate -> transitionToCandidateState()
             | RaftRole.Follower -> transitionToCandidateState()
-            | RaftRole.Leader -> NotImplementedException() |> raise
+            | RaftRole.Leader -> Log.Instance.Warn("Election timer fired whilst leader. Ignoring")
 
     let eventStreamSubscription = 
         eventStream.Publish |> Observable.subscribe(fun msg ->
