@@ -3,13 +3,20 @@
 open RaftCraft.Domain
 open RaftCraft.Interfaces
 open RaftCraft.Logging
+open System.Collections.Generic
 
 type RaftRole =
     | Follower
     | Candidate
     | Leader
 
-type NodeState(raftRole, term : int, votedFor) =
+type NodeState(configuration : RaftConfiguration, raftRole, term : int, votedFor) =
+    let getMajoritySize =
+        let nodeCount = configuration.Peers.Length + 1 // Peer nodes count + Self
+        (nodeCount / 2) + 1
+
+    let votes = HashSet<_>()
+
     let stringifyVotedFor() = 
         match votedFor with
             | Some v -> v.ToString()
@@ -19,11 +26,16 @@ type NodeState(raftRole, term : int, votedFor) =
     member __.Term = term
     member __.VotedFor : Option<int> = votedFor
 
+
     override __.ToString() =
         "Role: " + raftRole.ToString() + " Term: " + term.ToString() + " VotedFor: " + stringifyVotedFor()
 
 type NodeStateHolder(initialState : NodeState, dataStore : IPersistentDataStore) =
     let mutable nodeState : NodeState = initialState
+
+    // We need to keep track of who this node has voted for in its current term so that we know 
+    // when a majority has been reached.
+    let votedForInCurrentTerm = HashSet<_>()
 
     member __.Update(newState : NodeState) =
         nodeState <- newState

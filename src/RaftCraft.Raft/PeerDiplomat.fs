@@ -52,8 +52,6 @@ type PeerSupervisor(configuration : RaftConfiguration, nodeState : NodeStateHold
         |> Seq.map(fun node -> node.NodeId, clientFactory node nodeState)
         |> dict
     
-    let nodesWithConsensus = HashSet<int>()
-
     let broadcastToAll create =
         clients
         |> Seq.iter(fun client -> client.Value.Post (create client.Key))
@@ -64,8 +62,6 @@ type PeerSupervisor(configuration : RaftConfiguration, nodeState : NodeStateHold
             Guid.NewGuid(),
             new VoteRequest(nodeState.Current().Term, candidate, nodeState.LastLogIndex, nodeState.LastLogTerm))
 
-    let electionConsensusReached = Event<_>()
-
     member __.RequestVote() =
         newVoteRequest |> broadcastToAll
 
@@ -73,13 +69,9 @@ type PeerSupervisor(configuration : RaftConfiguration, nodeState : NodeStateHold
         let response = RaftMessage.NewVoteResponse(configuration.Self.NodeId, requestId, new VoteResponse(nodeState.Current().Term, isSuccess))
         clients.[sourceNodeId].Post(response)
 
-    member __.HandleVoteResponse(request : Guid) (sourceNodeId : int) (isSuccess : bool) =
+    member __.HandleVoteResponse(request : Guid) (sourceNodeId : int) =
         clients.[sourceNodeId].HandleResponse(request)
-
-        if(isSuccess) then
-            nodesWithConsensus.Add(sourceNodeId) |> ignore
-            if nodesWithConsensus.Count > (configuration.Peers.Length + 1) / 2 then
-                electionConsensusReached.Trigger()
+        if nodesWithConsensus.Count > (configuration.Peers.Length + 1) / 2 then
 
     member __.Start() =
         clients |> Seq.iter(fun client -> client.Value.Start())

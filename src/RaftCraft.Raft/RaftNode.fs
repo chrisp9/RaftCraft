@@ -7,7 +7,6 @@ open RaftCraft.RaftDomain
 open Utils
 open RaftCraft
 open RaftCraft.Logging
-open Subscription
 
 type RaftNode
         (serverFactory : RaftHost -> IRaftHost,
