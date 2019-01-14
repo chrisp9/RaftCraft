@@ -98,18 +98,21 @@ type RaftNode
             | VoteResponse r -> peerSupervisor.HandleVoteResponse msg.RequestId msg.SourceNodeId r.VoteGranted
             | _ -> invalidOp("Unknown message") |> raise // TODO deal with this better
         ()
-
+    
+    // TODO Refactor so that we only wire up subscriptions relevant to the role we're currently in. Realistically this means the "Role" Union
+    // holds all subscriptions needed for that role.
     let electionTimerFired() =
         match nodeState.Current().RaftRole with
-            | RaftRole.Candidate -> transitionToCandidateState()
-            | RaftRole.Follower -> transitionToCandidateState()
+            | RaftRole.Candidate -> transitionToCandidateState() // Candidate -> Candidate = split vote
+            | RaftRole.Follower -> transitionToCandidateState()  // Follower -> Candidate = leader is assumed down
             | RaftRole.Leader -> Log.Instance.Warn("Election timer fired whilst leader. Ignoring")
 
     let eventStreamSubscription = 
         eventStream.Publish |> Observable.subscribe(fun msg ->
             match msg with
                 | DomainEvent.Request r -> onMessage(r)
-                | DomainEvent.ElectionTimerFired -> electionTimerFired())
+                | DomainEvent.ElectionTimerFired -> electionTimerFired()
+                | DomainEvent.AppendEntriesPingFired -> ()) // TODO handle ping fired.
 
     let leaderElectionSubscription = 
         nodeState.ElectedLeader |> Observable.subscribe(fun() -> 
