@@ -8,6 +8,8 @@ open Utils
 open RaftCraft
 open RaftCraft.Logging
 open System.Xml.Linq
+open System.Xml.Linq
+open System.Xml.Linq
 
 type RaftNode
         (serverFactory : RaftHost -> IRaftHost,
@@ -34,6 +36,26 @@ type RaftNode
         messageLoop()
     )
 
+    let transitionToLeaderState() =
+        Log.Instance.Info("Transitioning to leader")
+        electionTimer.Stop()
+
+        nodeState.Update <| NodeState(RaftRole.Leader, nodeState.Current().Term + 1, None)
+
+    
+    let transitionToFollowerState term =
+        Log.Instance.Info("Transitioning to follower")
+
+        nodeState.Update <| NodeState(RaftRole.Follower, term, None)
+        electionTimer.Start(fun _ -> agent.Post(DomainEvent.ElectionTimerFired))
+
+    let transitionToCandidateState() =
+        Log.Instance.Info("Transitioning to candidate");
+
+        nodeState.Update <| NodeState(RaftRole.Candidate, nodeState.Current().Term + 1, Some configuration.Self.NodeId)
+        electionTimer.Start(fun _ -> agent.Post(DomainEvent.ElectionTimerFired))
+        peerSupervisor.RequestVote()
+
     let handleVoteRequest (msg : RaftMessage) (r : VoteRequest) = 
         let currentState = nodeState.Current()
 
@@ -44,7 +66,7 @@ type RaftNode
         // up to date as ours -- and we haven't already voted for a different node in the current term.
         if r.Term > nodeState.Current().Term then
             electionTimer.Reset()
-            nodeState.Update <| NodeState(RaftRole.Follower, r.Term, Some msg.SourceNodeId)
+            transitionToFollowerState r.Term
         else
             let candidateCheck =
                 match currentState.VotedFor with
@@ -77,26 +99,6 @@ type RaftNode
             | _ -> invalidOp("Unknown message") |> raise // TODO deal with this better
         ()
 
-    let transitionToLeaderState() =
-        Log.Instance.Info("Transitioning to leader")
-        electionTimer.Stop()
-
-        nodeState.Update <| NodeState(RaftRole.Leader, nodeState.Current().Term + 1, None)
-
-    
-    let transitionToFollowerState() =
-        Log.Instance.Info("Transitioning to follower")
-
-        nodeState.Update <| NodeState(RaftRole.Follower, nodeState.Current().Term + 1, None)
-        electionTimer.Start(fun _ -> agent.Post(DomainEvent.ElectionTimerFired))
-
-    let transitionToCandidateState() =
-        Log.Instance.Info("Transitioning to candidate");
-
-        nodeState.Update <| NodeState(RaftRole.Candidate, nodeState.Current().Term + 1, Some configuration.Self.NodeId)
-        electionTimer.Start(fun _ -> agent.Post(DomainEvent.ElectionTimerFired))
-        peerSupervisor.RequestVote()
-
     let electionTimerFired() =
         match nodeState.Current().RaftRole with
             | RaftRole.Candidate -> transitionToCandidateState()
@@ -117,7 +119,7 @@ type RaftNode
 
     member __.Start() =
         // Important to transition to follower before starting the server to avoid race conditions.
-        transitionToFollowerState()
+        transitionToFollowerState(nodeState.Current().Term + 1)
         server.Start (fun msg -> agent.Post(DomainEvent.Request(msg)))
         peerSupervisor.Start()
 

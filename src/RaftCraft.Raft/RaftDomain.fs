@@ -61,6 +61,7 @@ type NodeStateHolder(configuration : RaftConfiguration, initialState : NodeState
 type DomainEvent =
     | Request of RaftMessage
     | ElectionTimerFired
+    | AppendEntriesPingFired
 
 [<Struct>]
 type TimerTick = { Granularity : int64; CurrentTick : int64 }
