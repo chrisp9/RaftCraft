@@ -20,6 +20,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RaftCraft.Persistence", "RaftCraft.Persistence\RaftCraft.Persistence.csproj", "{F076AB2B-C857-43A1-AB89-7B36C23D1749}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{BC8D0711-353B-4C8D-BA3A-A8A54F4F86A5}"
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "RaftCraft.IntegrationTests", "RaftCraft.IntegrationTests\RaftCraft.IntegrationTests.fsproj", "{2B94776A-2281-407E-B248-FA009BEA6D4F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -50,9 +54,16 @@ Global
 		{F076AB2B-C857-43A1-AB89-7B36C23D1749}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F076AB2B-C857-43A1-AB89-7B36C23D1749}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F076AB2B-C857-43A1-AB89-7B36C23D1749}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2B94776A-2281-407E-B248-FA009BEA6D4F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2B94776A-2281-407E-B248-FA009BEA6D4F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2B94776A-2281-407E-B248-FA009BEA6D4F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2B94776A-2281-407E-B248-FA009BEA6D4F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{2B94776A-2281-407E-B248-FA009BEA6D4F} = {BC8D0711-353B-4C8D-BA3A-A8A54F4F86A5}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {0A18F6E6-775C-4033-94A7-F5F93D6D55A6}

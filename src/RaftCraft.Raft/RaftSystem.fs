@@ -18,9 +18,9 @@ type RaftSystem() =
     
         // TODO Make the hardcoded values here configurable.
         let globalTimerFactory = fun v -> new GlobalTimer(v)
-        let timerHolder = GlobalTimerHolder(globalTimerFactory, int64 50)
+        let timerHolder = GlobalTimerHolder(globalTimerFactory, int64 configuration.GlobalTimerTickInterval)
 
-        let electionTimerFactory = fun() -> ElectionTimer(timerHolder, int64 5000)
+        let electionTimerFactory = fun() -> ElectionTimer(timerHolder, int64 configuration.ElectionTimeout)
         let electionTimerHolder = ElectionTimerHolder(electionTimerFactory)
 
         // We translate from Func<_> to F#Func because this code is called from C# and want to keep
@@ -28,7 +28,7 @@ type RaftSystem() =
         let translatedServerFactory = serverFactory.Invoke
         let translatedClientFactory = clientFactory.Invoke
 
-        let peerSupervisorFactory = fun v -> new PeerSupervisor(configuration, v, fun v -> fun ns -> new PeerDiplomat(translatedClientFactory(v), ns, 200, timerHolder))
+        let peerSupervisorFactory = fun v -> new PeerSupervisor(configuration, v, fun v -> fun ns -> new PeerDiplomat(translatedClientFactory(v), ns, configuration.RequestPipelineRetryInterval, timerHolder))
         let nodeStateHolderFactory = fun v -> new NodeStateHolder(configuration, v, persistentDataStore)
 
         let raftNode =  RaftNode(translatedServerFactory, configuration, electionTimerHolder, peerSupervisorFactory, nodeStateHolderFactory)

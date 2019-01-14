@@ -39,17 +39,27 @@ namespace RaftCraft.Domain
 
         public string LogFile { get; set; }
 
-        // TODO hardcoded
-        public int RequestRetryIntervalMs => 200;
+        public int GlobalTimerTickInterval { get; set; }
+
+        public int ElectionTimeout { get; set; }
+
+        public int RequestPipelineRetryInterval { get; set; }
 
         public RaftConfiguration(
             RaftHost self, 
             RaftPeer[] peers,
-            string logFile)
+            string logFile,
+            int globalTimerTickInterval,
+            int electionTimeout,
+            int requestPipelineRetryInterval)
         {
             Self = self;
             Peers = peers ?? new RaftPeer[0];
             LogFile = logFile;
+
+            GlobalTimerTickInterval = globalTimerTickInterval;
+            ElectionTimeout = electionTimeout;
+            RequestPipelineRetryInterval = requestPipelineRetryInterval;
         }
     }
 }

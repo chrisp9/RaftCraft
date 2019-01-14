@@ -13,5 +13,8 @@
       "Address": "ws://127.0.0.1:2501"
     }
   ],
-  "LogFile": "c:/RaftCraft/Log/node3.txt"
+  "LogFile": "c:/RaftCraft/Log/node3.txt",
+  "GlobalTimerTickInterval": 50,
+  "ElectionTimeout": 5000,
+  "RequestPipelineRetryInterval": 200
 }
