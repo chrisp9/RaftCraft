@@ -2,7 +2,6 @@
 using RaftCraft.Domain;
 using RaftCraft.Logging;
 using RaftCraft.Persistence;
-using RaftCraft.Raft;
 using RaftCraft.Transport;
 using System;
 using System.IO;
@@ -18,6 +17,7 @@ namespace RaftCraft.Sample
                 Console.WriteLine(e.ExceptionObject);
                 Console.WriteLine("CRITICAL: Process is about to abort. Press any key to exit");
                 Console.ReadKey();
+                Environment.Exit(-1);
             };
             var configLocation = args.Length == 0 ? "AppConfig.json" : args[0];
 
