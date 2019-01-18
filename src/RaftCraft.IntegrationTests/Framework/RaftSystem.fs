@@ -14,7 +14,7 @@ type TestLogger() =
         member __.Warn(text) = printfn "%s" text
         member __.Info(text) = printfn "%s" text
 
-type RaftSystem(config : RaftConfiguration, log) =
+type RaftSystem(config : RaftConfiguration) =
     let raftServer = new RaftServer(config.Self.Address)
 
     let socketFactory = Func<RaftPeer,_>(fun v -> TransientWebSocketClient.Create(v.Address))
