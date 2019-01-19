@@ -24,3 +24,4 @@ type RaftTestSystem(config : RaftConfiguration) =
                 Func<_,_>(fun peer -> new PersistentWebSocketClient(peer, socketFactory, Log.Instance) :> IRaftPeer),
                 new SlowInMemoryDataStore() :> IPersistentDataStore,
                 config)
+    

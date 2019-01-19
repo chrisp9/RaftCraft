@@ -5,7 +5,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="Framework\RaftSystem.fs" />
+    <Compile Include="Framework\RaftTestSystem.fs" />
+    <Compile Include="Framework\RaftTestHarness.fs" />
     <Compile Include="Library.fs" />
   </ItemGroup>
 

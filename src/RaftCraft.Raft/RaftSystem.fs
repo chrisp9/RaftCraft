@@ -17,7 +17,7 @@ type RaftSystem() =
          configuration : RaftConfiguration) =
     
         // TODO Make the hardcoded values here configurable.
-        let globalTimerFactory = fun v -> new GlobalTimer(v)
+        let globalTimerFactory = fun v -> new GlobalTimer(v) :> IGlobalTimer
         let timerHolder = GlobalTimerHolder(globalTimerFactory, int64 configuration.GlobalTimerTickInterval)
 
         let electionTimerFactory = fun() -> ElectionTimer(timerHolder, int64 configuration.ElectionTimeout)

@@ -5,6 +5,7 @@ open RaftTimer
 open Subscription
 open RaftCraft.RaftDomain
 open RaftCraft.Logging
+open RaftCraft.Domain
 
 type TimerExpiry(expiry) =
     let mutable currentExpiry : int64 = expiry
@@ -22,7 +23,7 @@ type ElectionTimer(timer : GlobalTimerHolder, electionTimerTimeout : int64) =
 
     let timerExpiry = TimerExpiry(getNextExpiry())
 
-    let expiryCheck (tick) =
+    let expiryCheck (tick : TimerTick) =
         match timerExpiry with
             | v when v.Expiry <= tick.CurrentTick -> true
             | _ -> false

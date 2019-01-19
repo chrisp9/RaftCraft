@@ -4,6 +4,8 @@ open System.Threading
 open System.Timers
 open System
 open RaftCraft.RaftDomain
+open RaftCraft.Domain
+open RaftCraft.Interfaces
 
 type GlobalTimer(timerGranularity : int64) =
     let createTimer() =
@@ -27,26 +29,27 @@ type GlobalTimer(timerGranularity : int64) =
 
     let _ = timer.Elapsed.AddHandler(handler)
 
-    let createTick currentTick = {TimerTick.Granularity = timerGranularity; TimerTick.CurrentTick = int64 currentTick}
+    let createTick currentTick = TimerTick(timerGranularity, int64 currentTick)
 
     let observable = 
         event.Publish
         |> Observable.scan(fun count _ -> createTick (count.CurrentTick + (int64 1))) (createTick(int64 0))
 
-    member __.Observable() = observable
+    interface IGlobalTimer with
+        member __.Observable() = observable
 
-    member __.Start() = timer.Start()
+        member __.Start() = timer.Start()
 
-    member __.Stop() = 
-        timer.Stop()
-        timer.Elapsed.RemoveHandler(handler)
+        member __.Stop() = 
+            timer.Stop()
+            timer.Elapsed.RemoveHandler(handler)
 
 // Holds mutable state related to the GlobalTimer (currentTick) which is important for consumers.
-type GlobalTimerHolder(raftTimerFactory : int64 -> GlobalTimer, timerGranularity : int64) =
+type GlobalTimerHolder(raftTimerFactory : int64 -> IGlobalTimer, timerGranularity : int64) =
     
     let timer = raftTimerFactory timerGranularity
     let observable = timer.Observable()
-    let mutable currentTick = { TimerTick.Granularity = timerGranularity; TimerTick.CurrentTick = int64 0 }
+    let mutable currentTick = TimerTick(timerGranularity, int64 0)
 
     let pushValueObservable = Event<TimerTick>()
 

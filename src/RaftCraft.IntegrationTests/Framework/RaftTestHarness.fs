@@ -9,7 +9,8 @@ type RaftTestHarness(numberOfNodes : int) =
 
     let peer nodeId = RaftPeer(nodeId, getAddress (basePortNumber + nodeId))
 
-    let peers current total= [ for i in 1..total do if current <> i then yield i ]
+    // Returns Peer IDs for all nodes except the current node
+    let peers current total = [ for i in 1..total do if current <> i then yield i ]
 
     let getConfigFor nodeId =
         let address = getAddress(basePortNumber + nodeId)
