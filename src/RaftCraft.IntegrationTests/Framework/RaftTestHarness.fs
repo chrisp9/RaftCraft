@@ -2,7 +2,12 @@
 
 open RaftCraft.Domain
 
-type RaftTestHarness(numberOfNodes : int) =
+type RaftTestHarness
+    (numberOfNodes : int, 
+     getTimerTickGranularity : int -> int, 
+     getElectionTimeout : int -> int,
+     getRetryInterval : int -> int) =
+
     let basePortNumber = 24500
 
     let getAddress port = sprintf "localhost:%s" (port.ToString())
@@ -16,11 +21,17 @@ type RaftTestHarness(numberOfNodes : int) =
         let address = getAddress(basePortNumber + nodeId)
         
         let peersForNode = 
-            peers nodeId numberOfNodes 
+            peers nodeId numberOfNodes
                 |> Seq.map peer
                 |> Array.ofSeq
 
-        RaftConfiguration(RaftHost(nodeId, address), peersForNode, "", 50, 500, 500)
+        RaftConfiguration(
+            RaftHost(nodeId, address), 
+            peersForNode, 
+            "FakeLogLocation",
+            getTimerTickGranularity nodeId,
+            getElectionTimeout nodeId,
+            getRetryInterval nodeId)
 
     member __.Initialize() =
         [for nodeId in [1..numberOfNodes] do yield RaftTestSystem (getConfigFor nodeId)]
