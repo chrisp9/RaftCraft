@@ -34,4 +34,7 @@ type RaftTestHarness
             getRetryInterval nodeId)
 
     member __.Initialize() =
-        [for nodeId in [1..numberOfNodes] do yield RaftTestSystem (getConfigFor nodeId)]
+        [ 
+          for nodeId in [1..numberOfNodes] do 
+          yield (nodeId, RaftTestSystem (getConfigFor nodeId))
+        ] |> RaftTestSystemHolder

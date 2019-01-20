@@ -10,7 +10,7 @@ open RaftCraft.Domain
 type TestLogger() =
     interface ILogger with
         member __.Debug(text) = printfn "%s" text
-        member __.Error(text, e) = printfn "%s, %s" (text) (e.ToString())
+        member __.Error(text, e) = printfn "%s, Exception: %s" (text) (e.ToString())
         member __.Warn(text) = printfn "%s" text
         member __.Info(text) = printfn "%s" text
 
@@ -22,3 +22,6 @@ type RaftTestSystem(config : RaftConfiguration) =
                 Func<_,_>(fun peer -> new PersistentWebSocketClient(peer, socketFactory, Log.Instance) :> IRaftPeer),
                 new SlowInMemoryDataStore() :> IPersistentDataStore,
                 config)
+
+    member __.Node = node
+    member __.State = node.State()

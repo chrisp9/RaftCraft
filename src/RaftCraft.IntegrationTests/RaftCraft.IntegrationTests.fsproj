@@ -6,7 +6,9 @@
 
   <ItemGroup>
     <Compile Include="Fakes\FakeGlobalTimer.fs" />
+    <Compile Include="Framework\NodeId.fs" />
     <Compile Include="Framework\RaftTestSystem.fs" />
+    <Compile Include="Framework\RaftTestSystemHolder.fs" />
     <Compile Include="Framework\RaftTestHarness.fs" />
     <Compile Include="Library.fs" />
   </ItemGroup>

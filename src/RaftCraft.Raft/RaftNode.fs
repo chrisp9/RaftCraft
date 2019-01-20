@@ -131,6 +131,4 @@ type RaftNode
         eventStreamSubscription.Dispose()
         ()
 
-    // TODO expose readonly?
-    member __.State() = 
-        nodeState.Current().Clone()
+    member __.State() = nodeState.Current().Clone()

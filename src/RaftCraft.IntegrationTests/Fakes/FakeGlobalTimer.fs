@@ -10,13 +10,14 @@ type FakeGlobalTimer(granularity) =
     let mutable currentTick = int64 0
 
     interface IGlobalTimer with
-        member __.Observable(): IObservable<TimerTick> = 
+        member __.Observable() = 
             tickEvent.Publish :> IObservable<TimerTick>
-        member __.Start(): unit = 
+        member __.Start() = 
             canPublish <- true
-        member __.Stop(): unit = 
+        member __.Stop() = 
             canPublish <- false
      
     member __.Tick() =
-        currentTick <- currentTick + int64 1
-        tickEvent.Trigger (TimerTick(granularity, currentTick))
+        if canPublish then
+            currentTick <- currentTick + int64 1
+            tickEvent.Trigger (TimerTick(granularity, currentTick))
