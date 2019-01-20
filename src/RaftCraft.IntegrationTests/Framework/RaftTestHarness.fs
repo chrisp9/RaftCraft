@@ -12,17 +12,17 @@ type RaftTestHarness
 
     let getAddress port = sprintf "localhost:%s" (port.ToString())
 
-    let peer nodeId = RaftPeer(nodeId, getAddress (basePortNumber + nodeId))
+    let getPeer nodeId = RaftPeer(nodeId, getAddress (basePortNumber + nodeId))
 
     // Returns Peer IDs for all nodes except the current node
-    let peers current total = [ for i in 1..total do if current <> i then yield i ]
+    let getPeerIds current total = [ for i in 1..total do if current <> i then yield i ]
 
     let getConfigFor nodeId =
         let address = getAddress(basePortNumber + nodeId)
         
         let peersForNode = 
-            peers nodeId numberOfNodes
-                |> Seq.map peer
+            getPeerIds nodeId numberOfNodes
+                |> Seq.map getPeer
                 |> Array.ofSeq
 
         RaftConfiguration(

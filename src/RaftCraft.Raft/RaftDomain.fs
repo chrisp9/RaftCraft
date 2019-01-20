@@ -20,8 +20,8 @@ type NodeState(raftRole, term : int, votedFor) =
     member __.RaftRole : RaftRole = raftRole
     member __.Term = term
     member __.VotedFor : Option<int> = votedFor
-
-
+    member __.Clone() : NodeState = NodeState(raftRole, term, votedFor)
+    
     override __.ToString() =
         "Role: " + raftRole.ToString() + " Term: " + term.ToString() + " VotedFor: " + stringifyVotedFor()
 

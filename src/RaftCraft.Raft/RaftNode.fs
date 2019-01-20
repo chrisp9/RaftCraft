@@ -7,6 +7,8 @@ open RaftCraft.RaftDomain
 open Utils
 open RaftCraft
 open RaftCraft.Logging
+open System.Xml.Linq
+open System.Xml.Linq
 
 type RaftNode
         (serverFactory : RaftHost -> IRaftHost,
@@ -128,3 +130,7 @@ type RaftNode
         electionTimer.Stop()
         eventStreamSubscription.Dispose()
         ()
+
+    // TODO expose readonly?
+    member __.State() = 
+        nodeState.Current().Clone()

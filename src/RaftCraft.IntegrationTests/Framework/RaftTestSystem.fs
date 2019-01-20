@@ -15,8 +15,6 @@ type TestLogger() =
         member __.Info(text) = printfn "%s" text
 
 type RaftTestSystem(config : RaftConfiguration) =
-    let raftServer = new RaftServer(config.Self.Address)
-
     let socketFactory = Func<RaftPeer,_>(fun v -> TransientWebSocketClient.Create(v.Address))
 
     let node = RaftSystem.RaftSystem.Create(
@@ -24,4 +22,3 @@ type RaftTestSystem(config : RaftConfiguration) =
                 Func<_,_>(fun peer -> new PersistentWebSocketClient(peer, socketFactory, Log.Instance) :> IRaftPeer),
                 new SlowInMemoryDataStore() :> IPersistentDataStore,
                 config)
-    
