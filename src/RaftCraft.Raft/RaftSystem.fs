@@ -7,7 +7,6 @@ open RaftTimer
 open RaftCraft
 open RaftCraft.Raft
 open RaftCraft.RaftDomain
-open RaftCraft.Logging
 
 type RaftSystem() = 
     static member Create

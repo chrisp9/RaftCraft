@@ -5,6 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="Fakes\FakeGlobalTimer.fs" />
     <Compile Include="Framework\RaftTestSystem.fs" />
     <Compile Include="Framework\RaftTestHarness.fs" />
     <Compile Include="Library.fs" />
