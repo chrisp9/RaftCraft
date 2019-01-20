@@ -21,6 +21,7 @@ type RaftTestSystem(config : RaftConfiguration) =
                 Func<RaftHost, _>(fun host -> new RaftServer(host.Address) :> IRaftHost),
                 Func<_,_>(fun peer -> new PersistentWebSocketClient(peer, socketFactory, Log.Instance) :> IRaftPeer),
                 new SlowInMemoryDataStore() :> IPersistentDataStore,
+                Func<_,_>(fun v -> new FakeGlobalTimer(v) :> IGlobalTimer),
                 config)
 
     member __.Node = node

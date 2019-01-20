@@ -5,6 +5,7 @@ using RaftCraft.Persistence;
 using RaftCraft.Transport;
 using System;
 using System.IO;
+using static RaftTimer;
 
 namespace RaftCraft.Sample
 {
@@ -33,6 +34,7 @@ namespace RaftCraft.Sample
                 host => new RaftServer(host.Address),
                 peer => new PersistentWebSocketClient(peer, socketFactory, Log.Instance),
                 new SlowInMemoryDataStore(),
+                tickGranularity => new GlobalTimer(tickGranularity),
                 converted);
 
             node.Start();
