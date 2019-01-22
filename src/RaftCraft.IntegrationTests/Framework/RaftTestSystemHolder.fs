@@ -9,5 +9,13 @@ type RaftTestSystemHolder(values : ((int*RaftTestSystem) list)) =
         getNode nodeId
 
     member __.Tick(nodeId : NodeId) =
-       let (_, node) = values.[nodeId]
-       node.Node
+        (getNode nodeId).GlobalTimer.Tick()
+
+    member __.TickAll() =
+        values |> List.iter(fun v -> (v |> snd).Tick())
+
+    member __.AdvanceTime(milliseconds) =
+        values |> List.iter(fun v -> (v |> snd).AdvanceTime(milliseconds))
+
+    member __.AdvanceToElectionTimeout() =
+        values |> List.iter(fun v -> (v |> snd).AdvanceToElectionTimeout())

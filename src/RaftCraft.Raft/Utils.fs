@@ -31,6 +31,11 @@ type HashSetPool<'a>() =
     member __.Return(set : HashSet<'a>) =
         hashSets.Enqueue(set)
 
+type public TimerUtils() =
+    static member CalculateExpiryTick (timer) (granularity) (fuzzFactor) =
+        (timer / granularity) + fuzzFactor + int64 10
+        
+
 // Holds entries for a fixed amount of time.
 type Pipeline(retryIntervalMs : int) =
     let requestsById = Dictionary<Guid, RaftMessage>()

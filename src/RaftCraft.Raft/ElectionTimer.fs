@@ -6,6 +6,7 @@ open Subscription
 open RaftCraft.RaftDomain
 open RaftCraft.Logging
 open RaftCraft.Domain
+open Utils
 
 type TimerExpiry(expiry) =
     let mutable currentExpiry : int64 = expiry
@@ -18,7 +19,9 @@ type ElectionTimer(timer : GlobalTimerHolder, electionTimerTimeout : int64) =
     let getNextExpiry() =
         let tick = timer.CurrentTick
         let fuzzFactor = int64 (rng.Next(int tick.Granularity) / 2) 
-        let scheduledTick = (tick.CurrentTick + (electionTimerTimeout / tick.Granularity) + fuzzFactor + int64 10)
+
+        let offset = TimerUtils.CalculateExpiryTick electionTimerTimeout tick.Granularity fuzzFactor
+        let scheduledTick = tick.CurrentTick + offset
         scheduledTick
 
     let timerExpiry = TimerExpiry(getNextExpiry())

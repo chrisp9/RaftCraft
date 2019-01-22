@@ -6,6 +6,8 @@ open System
 open RaftCraft.Logging
 open RaftCraft.Persistence
 open RaftCraft.Domain
+open RaftTimer
+open Utils
 
 type TestLogger() =
     interface ILogger with
@@ -18,6 +20,11 @@ type RaftTestSystem(config : RaftConfiguration) =
     let socketFactory = Func<RaftPeer,_>(fun v -> TransientWebSocketClient.Create(v.Address))
 
     let mutable globalTimer = None
+
+    let forceGetGlobalTimer() = 
+        match globalTimer with
+            | Some v -> v
+            | None -> failwith "Cannot retrieve global timer before it has been created"
 
     let globalTimerFun = fun v ->
         match globalTimer with
@@ -38,7 +45,23 @@ type RaftTestSystem(config : RaftConfiguration) =
 
     member __.State = node.State()
 
-    member __.GlobalTimer = 
-        match globalTimer with
-            | Some v -> v
-            | None -> failwith "Cannot retrieve global timer before it has been created"
+    member __.GlobalTimer = forceGetGlobalTimer()
+
+    member __.Tick() = forceGetGlobalTimer().Tick()
+
+    member __.AdvanceTime(milliseconds) =
+        let granularity =  config.GlobalTimerTickInterval
+        let ticksToPerform = milliseconds / granularity
+        
+        for _ in 1..ticksToPerform do forceGetGlobalTimer().Tick()
+    
+    member __.AdvanceToElectionTimeout() =
+        let electionTimeout = config.ElectionTimeout
+        let granularity = config.GlobalTimerTickInterval
+
+        let fuzzFactor = config.GlobalTimerTickInterval / 2
+
+        let tickCount = TimerUtils.CalculateExpiryTick  (int64 electionTimeout) (int64 granularity) (int64 fuzzFactor)
+
+        for _ in int64 1..tickCount do
+            forceGetGlobalTimer().Tick()
