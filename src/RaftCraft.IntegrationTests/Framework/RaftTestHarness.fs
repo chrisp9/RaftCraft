@@ -1,6 +1,7 @@
 ﻿namespace RaftCraft.IntegrationTests.Framework
 
 open RaftCraft.Domain
+open RaftCraft.Logging
 
 type RaftTestHarness
     (numberOfNodes : int, 
@@ -10,7 +11,7 @@ type RaftTestHarness
 
     let basePortNumber = 24500
 
-    let getAddress port = sprintf "localhost:%s" (port.ToString())
+    let getAddress port = sprintf "ws://localhost:%s" (port.ToString())
 
     let getPeer nodeId = RaftPeer(nodeId, getAddress (basePortNumber + nodeId))
 
@@ -34,6 +35,8 @@ type RaftTestHarness
             getRetryInterval nodeId)
 
     member __.Initialize() =
+        Log.SetInstance(new TestLogger())
+
         [ 
           for nodeId in [1..numberOfNodes] do 
           yield (nodeId, RaftTestSystem (getConfigFor nodeId))

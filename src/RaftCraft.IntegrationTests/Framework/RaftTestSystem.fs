@@ -49,6 +49,8 @@ type RaftTestSystem(config : RaftConfiguration) =
 
     member __.Tick() = forceGetGlobalTimer().Tick()
 
+    member __.Start() = node.Start()
+
     member __.AdvanceTime(milliseconds) =
         let granularity =  config.GlobalTimerTickInterval
         let ticksToPerform = milliseconds / granularity

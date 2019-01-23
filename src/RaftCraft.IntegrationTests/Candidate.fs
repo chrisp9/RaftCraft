@@ -7,11 +7,20 @@ type Candidate() =
 
     let createFixture() = 
         let harness = new RaftTestHarness(3, (fun _ -> 50), (fun _ -> 1000), (fun _ -> 200))
-        harness.Initialize()
+        harness.Initialize().Start()
 
     [<Test>]
     member __.``Initial state is correct``() = 
         let fixture = createFixture()
-        fixture.GetNode(1).GlobalTimer.Tick()
+        fixture.AdvanceToElectionTimeout()
 
-        fixture.Tick
+
+        System.Threading.Thread.Sleep(1000)
+
+        let state1 = fixture.GetNode(1).State
+        let state2 = fixture.GetNode(2).State
+        let state3 = fixture.GetNode(3).State
+
+        System.Threading.Thread.Sleep(1000)
+
+        ()
