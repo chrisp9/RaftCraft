@@ -5,6 +5,7 @@ open RaftCraft.Interfaces
 open RaftCraft.Logging
 open System.Collections.Generic
 open System.Xml.Linq
+open System
 
 type RaftRole =
     | Follower
@@ -62,3 +63,4 @@ type DomainEvent =
     | Request of RaftMessage
     | ElectionTimerFired
     | AppendEntriesPingFired
+    | PingPong of (DateTime * (DateTime-> DateTime-> unit))

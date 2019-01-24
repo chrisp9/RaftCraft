@@ -109,7 +109,8 @@ type RaftNode
             match msg with
                 | DomainEvent.Request r -> onMessage(r)
                 | DomainEvent.ElectionTimerFired -> electionTimerFired()
-                | DomainEvent.AppendEntriesPingFired -> ()) // TODO handle ping fired.
+                | DomainEvent.AppendEntriesPingFired -> ()
+                | DomainEvent.PingPong(postTime, respond) -> respond postTime DateTime.UtcNow)
 
     let leaderElectionSubscription = 
         nodeState.ElectedLeader |> Observable.subscribe(fun() -> 
@@ -122,6 +123,8 @@ type RaftNode
         transitionToFollowerState(nodeState.Current().Term + 1)
         server.Start (fun msg -> agent.Post(DomainEvent.Request(msg)))
         peerSupervisor.Start()
+
+    member __.PingPong(DomainEvent.PingPong v) = agent.Post(DomainEvent.PingPong v)
 
     member __.Stop() =
         // TODO dispose server and clients nicely.
