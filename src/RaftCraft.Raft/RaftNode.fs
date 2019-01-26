@@ -27,6 +27,7 @@ type RaftNode
         let rec messageLoop() = async {
             let! msg = inbox.Receive()
             eventStream.Trigger(msg)
+
             return! messageLoop()
         }
 
@@ -64,28 +65,28 @@ type RaftNode
         if r.Term > nodeState.Current().Term then
             electionTimer.Reset()
             transitionToFollowerState r.Term
-        else
-            let candidateCheck =
-                match currentState.VotedFor with
-                | Some v -> if v = msg.SourceNodeId then true else false
-                | None -> true
 
-            let isSuccess = 
-                if (r.Term = currentState.Term && r.LastLogIndex >= nodeState.LastLogIndex && r.LastLogTerm >= nodeState.LastLogTerm && candidateCheck) 
-                then true 
-                else false
+        let candidateCheck =
+            match currentState.VotedFor with
+            | Some v -> if v = msg.SourceNodeId then true else false
+            | None -> true
 
-            let votedFor = 
-               match isSuccess with
-                    | true -> Some msg.SourceNodeId
-                    | false -> None
+        let isSuccess = 
+            if (r.Term >= currentState.Term && r.LastLogIndex >= nodeState.LastLogIndex && r.LastLogTerm >= nodeState.LastLogTerm && candidateCheck) 
+            then true 
+            else false
 
-            if isSuccess then 
-                Log.Instance.Info("Successful response")
-                electionTimer.Reset()
-                nodeState.Update <| NodeState(nodeState.Current().RaftRole, newTerm, votedFor)
+        let votedFor = 
+            match isSuccess with
+                | true -> Some msg.SourceNodeId
+                | false -> None
 
-            peerSupervisor.RespondToVoteRequest msg.RequestId msg.SourceNodeId isSuccess
+        if isSuccess then 
+            Log.Instance.Info("Successful response")
+            electionTimer.Reset()
+            nodeState.Update <| NodeState(nodeState.Current().RaftRole, newTerm, votedFor)
+
+        peerSupervisor.RespondToVoteRequest msg.RequestId msg.SourceNodeId isSuccess
 
     let onMessage (msg : RaftMessage) =
         Log.Instance.Info("Received " + msg.ToString())
@@ -110,7 +111,7 @@ type RaftNode
                 | DomainEvent.Request r -> onMessage(r)
                 | DomainEvent.ElectionTimerFired -> electionTimerFired()
                 | DomainEvent.AppendEntriesPingFired -> ()
-                | DomainEvent.PingPong(postTime, respond) -> respond postTime DateTime.UtcNow)
+                | DomainEvent.Ping c -> c.Reply(DateTime.UtcNow))
 
     let leaderElectionSubscription = 
         nodeState.ElectedLeader |> Observable.subscribe(fun() -> 
@@ -124,7 +125,8 @@ type RaftNode
         server.Start (fun msg -> agent.Post(DomainEvent.Request(msg)))
         peerSupervisor.Start()
 
-    member __.PingPong(DomainEvent.PingPong v) = agent.Post(DomainEvent.PingPong v)
+    member __.PingPong() = 
+        agent.PostAndAsyncReply(fun reply -> DomainEvent.Ping(reply))
 
     member __.Stop() =
         // TODO dispose server and clients nicely.

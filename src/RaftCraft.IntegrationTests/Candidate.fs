@@ -12,15 +12,14 @@ type Candidate() =
     [<Test>]
     member __.``Initial state is correct``() = 
         let fixture = createFixture()
-        fixture.AdvanceToElectionTimeout()
 
+        System.Threading.Thread.Sleep(2000)
+        fixture.GetNode(1).AdvanceToElectionTimeout() |> Async.RunSynchronously
 
-        System.Threading.Thread.Sleep(1000)
+        System.Threading.Thread.Sleep(5000)
 
         let state1 = fixture.GetNode(1).State
         let state2 = fixture.GetNode(2).State
         let state3 = fixture.GetNode(3).State
-
-        System.Threading.Thread.Sleep(1000)
 
         ()

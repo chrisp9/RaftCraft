@@ -63,4 +63,4 @@ type DomainEvent =
     | Request of RaftMessage
     | ElectionTimerFired
     | AppendEntriesPingFired
-    | PingPong of (DateTime * (DateTime-> DateTime-> unit))
+    | Ping of AsyncReplyChannel<DateTime>

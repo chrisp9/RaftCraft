@@ -6,7 +6,8 @@ type RaftTestSystemHolder(values : ((int*RaftTestSystem) list)) =
         node
 
     let forEachNode selector = values |> List.iter(fun v -> selector(v |> snd))
-    
+    let map selector = values |> List.map(fun v -> selector(v |> snd))
+
     member __.GetNode(nodeId : NodeId) = 
         getNode nodeId
 
@@ -23,4 +24,9 @@ type RaftTestSystemHolder(values : ((int*RaftTestSystem) list)) =
         forEachNode(fun v -> v.AdvanceTime(milliseconds))
 
     member __.AdvanceToElectionTimeout() =
-        forEachNode(fun v -> v.AdvanceToElectionTimeout())
+        let tasks = map(fun v -> v.AdvanceToElectionTimeout())
+        
+        tasks 
+            |> Async.Parallel 
+            |> Async.RunSynchronously 
+            |> ignore
