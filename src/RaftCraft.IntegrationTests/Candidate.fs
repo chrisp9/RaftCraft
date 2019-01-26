@@ -2,6 +2,7 @@ namespace RaftCraft.IntegrationTests
 
 open NUnit.Framework
 open RaftCraft.IntegrationTests.Framework
+open RaftCraft.RaftDomain
 
 type Candidate() =
 
@@ -13,13 +14,12 @@ type Candidate() =
     member __.``Initial state is correct``() = 
         let fixture = createFixture()
 
-        System.Threading.Thread.Sleep(2000)
         fixture.GetNode(1).AdvanceToElectionTimeout() |> Async.RunSynchronously
-
-        System.Threading.Thread.Sleep(5000)
 
         let state1 = fixture.GetNode(1).State
         let state2 = fixture.GetNode(2).State
         let state3 = fixture.GetNode(3).State
-
-        ()
+        
+        Assert.AreEqual(RaftRole.Leader, state1.RaftRole)
+        Assert.AreEqual(RaftRole.Follower, state2.RaftRole)
+        Assert.AreEqual(RaftRole.Candidate, state3.RaftRole)

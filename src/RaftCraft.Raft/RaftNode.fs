@@ -125,7 +125,7 @@ type RaftNode
         server.Start (fun msg -> agent.Post(DomainEvent.Request(msg)))
         peerSupervisor.Start()
 
-    member __.PingPong() = 
+    member __.Ping() = 
         agent.PostAndAsyncReply(fun reply -> DomainEvent.Ping(reply))
 
     member __.Stop() =

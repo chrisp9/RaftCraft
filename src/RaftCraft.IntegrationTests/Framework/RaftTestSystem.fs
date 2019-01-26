@@ -19,35 +19,22 @@ type TestLogger() =
 type RaftTestSystem(config : RaftConfiguration) =
     let socketFactory = Func<RaftPeer,_>(fun v -> TransientWebSocketClient.Create(v.Address))
 
-    let mutable globalTimer = None
-
-    let forceGetGlobalTimer() = 
-        match globalTimer with
-            | Some v -> v
-            | None -> failwith "Cannot retrieve global timer before it has been created"
-
-    let globalTimerFun = fun v ->
-        match globalTimer with
-            | Some v -> v
-            | None ->
-                let timer = new FakeGlobalTimer(v)
-                globalTimer <- Some timer
-                timer
+    let globalTimerShim = Shim<FakeGlobalTimer>()
 
     let node = RaftSystem.RaftSystem.Create(
                 Func<RaftHost, _>(fun host -> new RaftServer(host.Address) :> IRaftHost),
                 Func<_,_>(fun peer -> new PersistentWebSocketClient(peer, socketFactory, Log.Instance) :> IRaftPeer),
                 new SlowInMemoryDataStore() :> IPersistentDataStore,
-                Func<_,_>(fun v -> globalTimerFun(v) :> IGlobalTimer),
+                Func<_,_>(fun v -> globalTimerShim.Create(fun () ->  new FakeGlobalTimer(v)) :> IGlobalTimer),
                 config)
 
     member __.Node = node
 
     member __.State = node.State()
 
-    member __.GlobalTimer = forceGetGlobalTimer()
+    member __.GlobalTimer = globalTimerShim.ForceGet()
 
-    member __.Tick() = forceGetGlobalTimer().Tick()
+    member __.Tick() = globalTimerShim.ForceGet().Tick()
 
     member __.Start() = node.Start()
 
@@ -55,7 +42,7 @@ type RaftTestSystem(config : RaftConfiguration) =
         let granularity =  config.GlobalTimerTickInterval
         let ticksToPerform = milliseconds / granularity
         
-        for _ in 1..ticksToPerform do forceGetGlobalTimer().Tick()
+        for _ in 1..ticksToPerform do globalTimerShim.ForceGet().Tick()
     
     member __.AdvanceToElectionTimeout() =
         async {
@@ -67,7 +54,7 @@ type RaftTestSystem(config : RaftConfiguration) =
             let tickCount = TimerUtils.CalculateExpiryTick  (int64 electionTimeout) (int64 granularity) (int64 fuzzFactor)
 
             for _ in int64 1..tickCount do
-                forceGetGlobalTimer().Tick()
-                let! _ = node.PingPong()
+                globalTimerShim.ForceGet().Tick()
+                let! _ =  node.Ping()
                 ()
         }
