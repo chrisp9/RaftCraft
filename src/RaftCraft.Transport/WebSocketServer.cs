@@ -51,5 +51,10 @@ namespace RaftCraft.Transport
             // TODO yuck. Allocation Land.
             _webSocketServer.AddWebSocketService("/raft", () => new Behavior(onMessage));
         }
+
+        public void Stop()
+        {
+            _webSocketServer.Stop();
+        }
     }
 }

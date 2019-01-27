@@ -12,8 +12,20 @@ type Candidate() =
         harness.Initialize().Start()
 
     [<Test>]
+    member __.``All nodes start as followers``() =
+        use fixture = createFixture()
+
+        let state1 = fixture.GetNode(1).State
+        let state2 = fixture.GetNode(2).State
+        let state3 = fixture.GetNode(3).State
+
+        Assert.AreEqual(RaftRole.Follower, state1.RaftRole)
+        Assert.AreEqual(RaftRole.Follower, state2.RaftRole)
+        Assert.AreEqual(RaftRole.Follower, state3.RaftRole)
+   
+    [<Test>]
     member __.``Node starts election and becomes leader``() = 
-        let fixture = createFixture()
+        use fixture = createFixture()
 
         fixture.GetNode(1).AdvanceToElectionTimeout() |> Async.RunSynchronously
 

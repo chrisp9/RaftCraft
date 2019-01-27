@@ -2,6 +2,7 @@
 
 open RaftCraft.Domain
 open RaftCraft.Logging
+open System
 
 type RaftTestHarness
     (numberOfNodes : int, 

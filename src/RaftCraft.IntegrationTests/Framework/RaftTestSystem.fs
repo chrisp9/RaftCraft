@@ -66,3 +66,5 @@ type RaftTestSystem(config : RaftConfiguration) =
                 let! _ =  node.Ping()
                 ()
         }
+
+    member __.Stop() = node.Stop()

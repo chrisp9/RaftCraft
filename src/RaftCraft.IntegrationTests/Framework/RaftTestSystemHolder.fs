@@ -1,5 +1,7 @@
 ﻿namespace RaftCraft.IntegrationTests.Framework
 
+open System
+
 type RaftTestSystemHolder(values : ((int*RaftTestSystem) list)) = 
     let getNode nodeId =
         let (_, node) = values.[nodeId - 1]
@@ -31,3 +33,7 @@ type RaftTestSystemHolder(values : ((int*RaftTestSystem) list)) =
             |> Async.Parallel 
             |> Async.RunSynchronously 
             |> ignore
+
+    interface IDisposable with
+        member __.Dispose() =
+            forEachNode(fun v -> v.Stop())
