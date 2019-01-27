@@ -12,8 +12,8 @@ type RaftTestSystemHolder(values : ((int*RaftTestSystem) list)) =
         getNode nodeId
 
     member this.Start() =
-        values |> List.iter(fun v -> (v |> snd).Start())
-        values |> List.iter(fun v -> (v |> snd).WaitUntilConnected())
+        forEachNode(fun v -> v.Start())
+        forEachNode(fun v -> v.WaitUntilConnected())
         this
 
     member __.Tick(nodeId : NodeId) =
