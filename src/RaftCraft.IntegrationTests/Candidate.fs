@@ -59,3 +59,48 @@ type Candidate() =
         Assert.AreEqual(RaftRole.Leader, state1.RaftRole)
         Assert.AreEqual(RaftRole.Follower, state2.RaftRole)
         Assert.AreEqual(RaftRole.Follower, state3.RaftRole)
+
+    [<Test>]
+    member __.``Node cannot become leader when it is of an older term``() =
+        use fixture = createFixture()
+
+        // All nodes are initially blind to each other
+        fixture.KillCommunicationWith(1)
+        fixture.KillCommunicationWith(2)
+        fixture.KillCommunicationWith(3)
+
+        // Node 1 runs an election 
+        fixture.GetNode(1).AdvanceToElectionTimeout() |> Async.RunSynchronously
+        Thread.Sleep(500)
+
+        fixture.GetNode(2).AdvanceToElectionTimeout() |> Async.RunSynchronously
+        Thread.Sleep(500)
+
+        fixture.GetNode(2).AdvanceToElectionTimeout() |> Async.RunSynchronously
+        Thread.Sleep(500)
+
+        fixture.ResurrectCommunicationWith(1)
+        Thread.Sleep(500)
+
+        fixture.ResurrectCommunicationWith(2)
+        Thread.Sleep(500)
+
+        fixture.ResurrectCommunicationWith(3)
+        Thread.Sleep(500)
+
+        fixture.GetNode(1).AdvanceTime(200)
+        Thread.Sleep(500)
+
+        fixture.GetNode(2).AdvanceTime(200)
+        Thread.Sleep(500)
+
+        fixture.GetNode(3).AdvanceTime(200)
+        Thread.Sleep(500)
+
+        Thread.Sleep(1000)
+
+        let state1 = fixture.GetNode(1).State
+        let state2 = fixture.GetNode(2).State
+        let state3 = fixture.GetNode(3).State
+
+        ()
