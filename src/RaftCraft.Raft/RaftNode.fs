@@ -39,7 +39,6 @@ type RaftNode
         electionTimer.Stop()
 
         nodeState.Update <| NodeState(RaftRole.Leader, nodeState.Current().Term + 1, None)
-
     
     let transitionToFollowerState term =
         Log.Instance.Info("Transitioning to follower")

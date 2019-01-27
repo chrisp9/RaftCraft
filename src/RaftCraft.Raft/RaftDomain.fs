@@ -6,6 +6,7 @@ open RaftCraft.Logging
 open System.Collections.Generic
 open System.Xml.Linq
 open System
+open System.Xml.Linq
 
 type RaftRole =
     | Follower
@@ -47,11 +48,16 @@ type NodeStateHolder(configuration : RaftConfiguration, initialState : NodeState
         if previousState.Term <> newState.Term then votesReceivedInCurrentTerm.Clear()
 
         dataStore.Update(newState.Term, (newState.VotedFor |> Option.toNullable))
+        
+        match nodeState.VotedFor with
+            | Some v -> votesReceivedInCurrentTerm.Add(v) |> ignore
+            | _ -> ()
 
     member __.Current() = nodeState
 
     member __.Vote(node) = 
         (votesReceivedInCurrentTerm.Add node) |> ignore
+
         if votesReceivedInCurrentTerm.Count >= getMajoritySize() then
             electedLeader.Trigger()
 

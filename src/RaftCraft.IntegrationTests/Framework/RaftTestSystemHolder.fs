@@ -26,10 +26,10 @@ type RaftTestSystemHolder(values : ((int*RaftTestSystem) list)) =
     member __.AdvanceTime(milliseconds) =
         forEachNode(fun v -> v.AdvanceTime(milliseconds))
 
-    member __.Kill(nodeId) =
+    member __.KillCommunicationWith(nodeId) =
         forEachNode(fun v -> v.Kill(nodeId))
 
-    member __.Resurrect(nodeId) =
+    member __.ResurrectCommunicationWith(nodeId) =
         forEachNode(fun v -> v.Resurrect(nodeId))
     
     member __.AdvanceToElectionTimeout() =
