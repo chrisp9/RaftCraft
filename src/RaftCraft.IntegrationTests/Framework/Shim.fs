@@ -18,9 +18,23 @@ type Shim<'a>() =
             | Some v -> v
             | None -> failwith "Cannot retrieve value before it has been created"
 
-//type StoredShim<'a>() =
+type KeyedShim<'a, 'b when 'a : equality>() =
+    let lookup = Dictionary<'a,'b>()
+   
+    member __.Create key valueFactory =
+        match lookup.TryGetValue key with
+            | true, v -> v
+            | false, _ -> 
+                let value = valueFactory(key)
+                lookup.[key] <- value
+                value
 
-//    let values = List<_>()
-
-//    member __.Create(valueFactory) =
-//        let value = valueFactory
+    member __.ForceGet(key) =
+        match lookup.TryGetValue key with
+            | true, v -> v
+            | _ -> failwith("Key does not exist")
+   
+    member __.ForAll(func) = 
+        lookup 
+        |> Seq.map(fun v -> v.Value) 
+        |> Seq.iter(func)

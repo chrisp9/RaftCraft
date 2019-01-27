@@ -21,11 +21,14 @@ type RaftTestSystem(config : RaftConfiguration) =
     let socketFactory = Func<RaftPeer,_>(fun v -> TransientWebSocketClient.Create(v.Address))
 
     let globalTimerShim = Shim<FakeGlobalTimer>()
-    let persistentWebSocketClientShim = Shim<PersistentWebSocketClientShim>()
+    let persistentWebSocketClientShim = KeyedShim<int, PersistentWebSocketClientShim>()
+
+    let create (peer : RaftPeer) =
+        persistentWebSocketClientShim.Create (peer.NodeId) (fun _ -> new PersistentWebSocketClient(peer, socketFactory, Log.Instance) |> PersistentWebSocketClientShim)
 
     let node = RaftSystem.RaftSystem.Create(
                 Func<RaftHost, _>(fun host -> new RaftServer(host.Address) :> IRaftHost),
-                Func<_,_>(fun peer -> persistentWebSocketClientShim.Create(fun() -> new PersistentWebSocketClientShim(new PersistentWebSocketClient(peer, socketFactory, Log.Instance))) :> IRaftPeer),
+                Func<_,_>(fun peer -> create peer :> IRaftPeer),
                 new SlowInMemoryDataStore() :> IPersistentDataStore,
                 Func<_,_>(fun v -> globalTimerShim.Create(fun () ->  new FakeGlobalTimer(v)) :> IGlobalTimer),
                 config)
@@ -39,6 +42,9 @@ type RaftTestSystem(config : RaftConfiguration) =
     member __.Tick() = globalTimerShim.ForceGet().Tick()
 
     member __.Start() = node.Start()
+
+    member __.WaitUntilConnected() =
+        persistentWebSocketClientShim.ForAll (fun v -> v.WaitUntilConnected())
 
     member __.AdvanceTime(milliseconds) =
         let granularity =  config.GlobalTimerTickInterval

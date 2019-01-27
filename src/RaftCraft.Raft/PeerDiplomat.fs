@@ -6,8 +6,6 @@ open System
 open Utils
 open RaftCraft.RaftDomain
 open RaftTimer
-open System.Collections.Generic
-open System.Xml.Linq
 
 type RetryCount = int
 type ExpiryTick = int64
