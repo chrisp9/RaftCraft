@@ -5,6 +5,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="Common\Poller.fs" />
+    <Compile Include="Shims\PersistentWebSocketClientShim.fs" />
     <Compile Include="Fakes\FakeGlobalTimer.fs" />
     <Compile Include="Framework\NodeId.fs" />
     <Compile Include="Framework\Shim.fs" />

@@ -2,12 +2,15 @@
 using RaftCraft.Interfaces;
 using System;
 using System.Diagnostics;
+using System.Net.WebSockets;
 using System.Threading.Tasks;
 
 namespace RaftCraft.Transport
 {
     public class PersistentWebSocketClient : IRaftPeer
     {
+        public WebSocketState WebSocketState => _currentClient?.State ?? WebSocketState.Closed;
+
         private readonly RaftPeer _peer;
         private readonly Func<RaftPeer, TransientWebSocketClient> _clientFactory;
         private TransientWebSocketClient _currentClient;

@@ -8,6 +8,7 @@ open RaftCraft.Persistence
 open RaftCraft.Domain
 open RaftTimer
 open Utils
+open RaftCraft.IntegrationTests.Shims
 
 type TestLogger() =
     interface ILogger with
@@ -20,10 +21,11 @@ type RaftTestSystem(config : RaftConfiguration) =
     let socketFactory = Func<RaftPeer,_>(fun v -> TransientWebSocketClient.Create(v.Address))
 
     let globalTimerShim = Shim<FakeGlobalTimer>()
+    let persistentWebSocketClientShim = Shim<PersistentWebSocketClientShim>()
 
     let node = RaftSystem.RaftSystem.Create(
                 Func<RaftHost, _>(fun host -> new RaftServer(host.Address) :> IRaftHost),
-                Func<_,_>(fun peer -> new PersistentWebSocketClient(peer, socketFactory, Log.Instance) :> IRaftPeer),
+                Func<_,_>(fun peer -> persistentWebSocketClientShim.Create(fun() -> new PersistentWebSocketClientShim(new PersistentWebSocketClient(peer, socketFactory, Log.Instance))) :> IRaftPeer),
                 new SlowInMemoryDataStore() :> IPersistentDataStore,
                 Func<_,_>(fun v -> globalTimerShim.Create(fun () ->  new FakeGlobalTimer(v)) :> IGlobalTimer),
                 config)

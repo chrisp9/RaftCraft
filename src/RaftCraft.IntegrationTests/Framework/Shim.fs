@@ -1,5 +1,7 @@
 ﻿namespace RaftCraft.IntegrationTests.Framework
 
+open System.Collections.Generic
+
 type Shim<'a>() =
     let mutable (value : 'a option) = None
 
@@ -15,3 +17,10 @@ type Shim<'a>() =
         match value with
             | Some v -> v
             | None -> failwith "Cannot retrieve value before it has been created"
+
+//type StoredShim<'a>() =
+
+//    let values = List<_>()
+
+//    member __.Create(valueFactory) =
+//        let value = valueFactory
