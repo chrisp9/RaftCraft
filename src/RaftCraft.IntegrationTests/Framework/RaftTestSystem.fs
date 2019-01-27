@@ -44,7 +44,13 @@ type RaftTestSystem(config : RaftConfiguration) =
     member __.Start() = node.Start()
 
     member __.WaitUntilConnected() =
-        persistentWebSocketClientShim.ForAll (fun v -> v.WaitUntilConnected())
+        persistentWebSocketClientShim.ForAll (fun _ v -> v.WaitUntilConnected())
+
+    member __.Kill(nodeId) =
+        persistentWebSocketClientShim.ForAll (fun k v -> if k = nodeId then v.Kill())
+
+    member __.Resurrect(nodeId) =
+        persistentWebSocketClientShim.ForAll (fun k v -> if k = nodeId then v.Resurrect())
 
     member __.AdvanceTime(milliseconds) =
         let granularity =  config.GlobalTimerTickInterval

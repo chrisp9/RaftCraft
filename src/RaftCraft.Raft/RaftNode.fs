@@ -129,7 +129,7 @@ type RaftNode
         agent.PostAndAsyncReply(fun reply -> DomainEvent.Ping(reply))
 
     member __.Stop() =
-        // TODO dispose server and clients nicely.
+        // TODO dispose clients nicely.
         electionTimer.Stop()
         eventStreamSubscription.Dispose()
         server.Stop()

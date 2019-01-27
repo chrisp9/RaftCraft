@@ -38,3 +38,6 @@ type KeyedShim<'a, 'b when 'a : equality>() =
         lookup 
         |> Seq.map(fun v -> v.Value) 
         |> Seq.iter(func)
+    
+    member __.ForAll(func) =
+        lookup |> Seq.iter(fun v -> func v.Key v.Value)

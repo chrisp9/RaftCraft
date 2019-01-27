@@ -26,6 +26,12 @@ type RaftTestSystemHolder(values : ((int*RaftTestSystem) list)) =
     member __.AdvanceTime(milliseconds) =
         forEachNode(fun v -> v.AdvanceTime(milliseconds))
 
+    member __.Kill(nodeId) =
+        forEachNode(fun v -> v.Kill(nodeId))
+
+    member __.Resurrect(nodeId) =
+        forEachNode(fun v -> v.Resurrect(nodeId))
+    
     member __.AdvanceToElectionTimeout() =
         let tasks = map(fun v -> v.AdvanceToElectionTimeout())
         
