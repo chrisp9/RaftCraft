@@ -78,12 +78,14 @@ type Pipeline(retryIntervalMs : int) =
     // Might be better to use F# agent in the PeerSupervisor and each PeerDiplomat.
     member __.Add(message : RaftMessage, currentTick : TimerTick) =
 
-        // We schedule for the next tick after the calculated expiry tick, because in rare edge cases with frequent retry interval,
-        // the expiry tick might be for the current clock tick quantum.
-        let expiryTick = currentTick.CurrentTick + ((int64 retryIntervalMs) / (int64 (currentTick.Granularity))) + int64 1
+        let expiryTick = currentTick.CurrentTick + ((int64 retryIntervalMs) / (int64 (currentTick.Granularity)))
+
+        // In rare edge cases with frequent retry interval, the expiry tick might be for the current clock tick quantum,
+        // so we have to shift forward by a single tick.
+        let adjustedExpiryTick = if expiryTick <= currentTick.CurrentTick then expiryTick + (int64 1) else expiryTick
 
         lock token (fun() ->
-            let expiriesForThisTick = getOrAdd(requestsByTick, expiryTick, fun() -> pool.Borrow())
+            let expiriesForThisTick = getOrAdd(requestsByTick, adjustedExpiryTick, fun() -> pool.Borrow())
 
             expiriesForThisTick.Add(message.RequestId) |> ignore
 

@@ -9,6 +9,7 @@ open RaftCraft.Domain
 open RaftTimer
 open Utils
 open RaftCraft.IntegrationTests.Shims
+open RaftCraft.RaftDomain
 
 type TestLogger() =
     interface ILogger with
@@ -58,16 +59,10 @@ type RaftTestSystem(config : RaftConfiguration) =
         
         for _ in 1..ticksToPerform do globalTimerShim.ForceGet().Tick()
     
-    member __.AdvanceToElectionTimeout() =
+    member __.AdvanceToCandidate() =
         async {
-            let electionTimeout = config.ElectionTimeout
-            let granularity = config.GlobalTimerTickInterval
-
-            let fuzzFactor = config.GlobalTimerTickInterval / 2
-
-            let tickCount = TimerUtils.CalculateExpiryTick  (int64 electionTimeout) (int64 granularity) (int64 fuzzFactor)
-
-            for _ in int64 1..tickCount do
+            
+            while node.State().RaftRole <> RaftRole.Candidate do
                 globalTimerShim.ForceGet().Tick()
                 let! _ =  node.Ping()
                 ()

@@ -1,6 +1,7 @@
 ﻿namespace RaftCraft.IntegrationTests.Framework
 
 open System
+open RaftCraft.IntegrationTests.Common
 
 type RaftTestSystemHolder(values : ((int*RaftTestSystem) list)) = 
     let getNode nodeId =
@@ -9,6 +10,27 @@ type RaftTestSystemHolder(values : ((int*RaftTestSystem) list)) =
 
     let forEachNode selector = values |> List.iter(fun v -> selector(v |> snd))
     let map selector = values |> List.map(fun v -> selector(v |> snd))
+    let map2 selector = values |> List.map(fun v -> (v |> snd, selector(v |> snd)))
+
+    let matches func =
+        (map2 func) 
+            |> Seq.filter(fun (a, b) -> b = true)
+            |> Seq.map(fun (a, _) -> a)
+
+    let any func = 
+        let matched = matches func |> List.ofSeq
+
+        match matched with
+            | x :: y -> Some x
+            | [] -> None
+
+    let exactlyOne func =
+        let matched = matches func |> List.ofSeq
+        
+        match matched with
+            | x :: y when y.Length = 0 -> Some x
+            | x :: y -> failwith("Expected only one element")
+            | [] -> None
 
     member __.GetNode(nodeId : NodeId) = 
         getNode nodeId
@@ -31,14 +53,9 @@ type RaftTestSystemHolder(values : ((int*RaftTestSystem) list)) =
 
     member __.ResurrectCommunicationWith(nodeId) =
         forEachNode(fun v -> v.Resurrect(nodeId))
-    
-    member __.AdvanceToElectionTimeout() =
-        let tasks = map(fun v -> v.AdvanceToElectionTimeout())
-        
-        tasks 
-            |> Async.Parallel 
-            |> Async.RunSynchronously 
-            |> ignore
+
+    member __.ExpectTerm(term) =
+        Poller.UntilMatch(fun() -> any (fun v -> v.State.Term = term))
 
     interface IDisposable with
         member __.Dispose() =

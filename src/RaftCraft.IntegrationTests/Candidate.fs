@@ -28,7 +28,7 @@ type Candidate() =
     member __.``Node starts election and becomes leader``() = 
         use fixture = createFixture()
 
-        fixture.GetNode(1).AdvanceToElectionTimeout() |> Async.RunSynchronously
+        fixture.GetNode(1).AdvanceToCandidate() |> Async.RunSynchronously
 
         Poller.Until(fun () -> fixture.GetNode(1).State.RaftRole = RaftRole.Leader)
 
@@ -48,7 +48,7 @@ type Candidate() =
 
         // Even though other nodes can't communicate with node 3, we still expect
         // that node 1 can become leader because it receives votes from a majority
-        fixture.GetNode(1).AdvanceToElectionTimeout() |> Async.RunSynchronously
+        fixture.GetNode(1).AdvanceToCandidate() |> Async.RunSynchronously
 
         Poller.Until(fun () -> fixture.GetNode(1).State.RaftRole = RaftRole.Leader)
 
@@ -70,37 +70,18 @@ type Candidate() =
         fixture.KillCommunicationWith(3)
 
         // Node 1 runs an election 
-        fixture.GetNode(1).AdvanceToElectionTimeout() |> Async.RunSynchronously
-        Thread.Sleep(500)
-
-        fixture.GetNode(2).AdvanceToElectionTimeout() |> Async.RunSynchronously
-        Thread.Sleep(500)
-
-        fixture.GetNode(2).AdvanceToElectionTimeout() |> Async.RunSynchronously
-        Thread.Sleep(500)
+        fixture.GetNode(1).AdvanceToCandidate() |> Async.RunSynchronously
+        fixture.GetNode(2).AdvanceToCandidate() |> Async.RunSynchronously
+        fixture.GetNode(2).AdvanceToCandidate() |> Async.RunSynchronously
 
         fixture.ResurrectCommunicationWith(1)
-        Thread.Sleep(500)
-
         fixture.ResurrectCommunicationWith(2)
-        Thread.Sleep(500)
-
         fixture.ResurrectCommunicationWith(3)
-        Thread.Sleep(500)
 
         fixture.GetNode(1).AdvanceTime(200)
-        Thread.Sleep(500)
-
         fixture.GetNode(2).AdvanceTime(200)
-        Thread.Sleep(500)
-
         fixture.GetNode(3).AdvanceTime(200)
-        Thread.Sleep(500)
 
-        Thread.Sleep(1000)
-
-        let state1 = fixture.GetNode(1).State
-        let state2 = fixture.GetNode(2).State
-        let state3 = fixture.GetNode(3).State
-
+        let highestTerm = fixture.ExpectTerm(3)
+        
         ()
