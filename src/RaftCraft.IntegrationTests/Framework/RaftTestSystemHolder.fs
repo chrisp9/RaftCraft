@@ -40,8 +40,14 @@ type RaftTestSystemHolder(values : ((int*RaftTestSystem) list)) =
         forEachNode(fun v -> v.WaitUntilConnected())
         this
 
+    member __.ForAll(func) =
+        forEachNode func
+
     member __.Tick(nodeId : NodeId) =
         (getNode nodeId).GlobalTimer.Tick()
+
+    member __.AdvanceAll(time) =
+        forEachNode(fun v -> v.AdvanceTime(time))
 
     member __.TickAll() = forEachNode(fun v -> v.Tick())
 
@@ -51,7 +57,7 @@ type RaftTestSystemHolder(values : ((int*RaftTestSystem) list)) =
     member __.KillCommunicationWith(nodeId) =
         forEachNode(fun v -> v.Kill(nodeId))
 
-    member __.ResurrectCommunicationWith(nodeId) =
+    member __.RestoreCommunicationWith(nodeId) =
         forEachNode(fun v -> v.Resurrect(nodeId))
 
     member __.ExpectTerm(term) =

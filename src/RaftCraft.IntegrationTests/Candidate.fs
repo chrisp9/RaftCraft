@@ -4,7 +4,6 @@ open NUnit.Framework
 open RaftCraft.IntegrationTests.Framework
 open RaftCraft.RaftDomain
 open RaftCraft.IntegrationTests.Common
-open System.Threading
 
 type Candidate() =
 
@@ -61,7 +60,7 @@ type Candidate() =
         Assert.AreEqual(RaftRole.Follower, state3.RaftRole)
 
     [<Test>]
-    member __.``Node cannot become leader when it is of an older term``() =
+    member __.``Node becomes leader after communication failure``() =
         use fixture = createFixture()
 
         // All nodes are initially blind to each other
@@ -74,14 +73,9 @@ type Candidate() =
         fixture.GetNode(2).AdvanceToCandidate() |> Async.RunSynchronously
         fixture.GetNode(2).AdvanceToCandidate() |> Async.RunSynchronously
 
-        fixture.ResurrectCommunicationWith(1)
-        fixture.ResurrectCommunicationWith(2)
-        fixture.ResurrectCommunicationWith(3)
-
-        fixture.GetNode(1).AdvanceTime(200)
-        fixture.GetNode(2).AdvanceTime(200)
-        fixture.GetNode(3).AdvanceTime(200)
+        fixture.RestoreCommunicationWith(1)
+        fixture.RestoreCommunicationWith(2)
+        fixture.RestoreCommunicationWith(3)
 
         let highestTerm = fixture.ExpectTerm(3)
-        
-        ()
+        Assert.AreEqual(RaftRole.Leader, highestTerm.State.RaftRole)

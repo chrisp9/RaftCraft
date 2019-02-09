@@ -17,5 +17,4 @@ type Poller() =
                 untilMatch func (retries - 1)
     
     static member Until(func) = until func 10
-
     static member UntilMatch(func) = untilMatch func 10
